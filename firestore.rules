@@ -1,5 +1,5 @@
 rules_version = '2';
-// 물품 구매 관리 Firestore 보안 규칙
+// 구의연세정신건강의학과 Firebase(maumpurchase) 보안 규칙 — 물품 구매 관리 · 마음 다이어리 · 마음비타민 탁구
 // 결재 라인: 직원 수요 → 중간관리자(mid) 검수 → 최종관리자(final) 결재 → 구매 담당(buyer) 결제 → 중간관리자 수령 검수
 // - 이메일 인증을 마친 구성원만 읽고 씁니다.
 // - 주문서 단계는 정해진 역할만 넘길 수 있습니다 (예: 결재는 최종관리자만).
@@ -102,6 +102,50 @@ service cloud.firestore {
       match /secret/{k} {
         allow read: if hasRole(org, 'buyer') || hasRole(org, 'final') || isAdmin(org);
         allow write: if hasRole(org, 'final') || isAdmin(org);
+      }
+    }
+
+    // ================= 나의 마음 다이어리 =================
+    // 내 다이어리는 나만 읽고 씁니다.
+    match /diaries/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ================= 마음비타민 탁구 클럽 =================
+    // 만든 사람 = 매니저. 참여 코드로 들어온 회원은 '보기만', 매니저가 '기록 담당'으로 바꿔 줍니다.
+    match /ppUsers/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /ppCodes/{code} {
+      allow get: if request.auth != null;
+      allow create: if request.auth != null
+        && getAfter(/databases/$(database)/documents/ppClubs/$(request.resource.data.club)).data.owner == request.auth.uid;
+    }
+    match /ppClubs/{club} {
+      function ppPath() { return /databases/$(database)/documents/ppClubs/$(club)/members/$(request.auth.uid); }
+      function ppIn() { return request.auth != null && exists(ppPath()); }
+      function ppRole() { return get(ppPath()).data.role; }
+      function ppEdit() { return ppIn() && ppRole() in ['manager', 'editor']; }
+      function ppMgr() { return ppIn() && ppRole() == 'manager'; }
+
+      allow read: if ppIn();
+      allow create: if request.auth != null && request.resource.data.owner == request.auth.uid;
+      allow update: if ppMgr() && request.resource.data.owner == resource.data.owner;
+
+      match /members/{m} {
+        allow read: if ppIn();
+        allow create: if request.auth != null && request.auth.uid == m && (
+          (getAfter(/databases/$(database)/documents/ppClubs/$(club)).data.owner == request.auth.uid && request.resource.data.role == 'manager')
+          || (request.resource.data.role == 'viewer'
+              && request.resource.data.code == get(/databases/$(database)/documents/ppClubs/$(club)).data.joinCode));
+        allow update: if ppMgr()
+          || (request.auth != null && request.auth.uid == m && ppIn()
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
+        allow delete: if ppMgr() || (request.auth != null && request.auth.uid == m);
+      }
+      match /{col}/{id} {
+        allow read: if ppIn() && col != 'members';
+        allow write: if ppEdit() && col in ['attendance', 'scores', 'league', 'settings', 'stats'];
       }
     }
   }
