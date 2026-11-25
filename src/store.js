@@ -61,6 +61,7 @@ function firebaseStore(config) {
 
     // 새 기관 만들기: 만든 사람 = 관리자
     async createOrg({ orgName, myName, roles, seed }) {
+      try { await auth.currentUser.getIdToken(true); } catch (e) { } // 이메일 인증 정보를 새로 받기
       const orgId = doc(collection(db, "orgs")).id, code = newCode();
       const b = writeBatch(db);
       b.set(O(orgId), clean({ name: orgName, owner: uid, joinCode: code, ...seed, updated: Date.now() }));
@@ -72,6 +73,7 @@ function firebaseStore(config) {
     },
     // 참여 코드로 들어가기: 처음엔 '직원' 역할
     async joinOrg(code, myName) {
+      try { await auth.currentUser.getIdToken(true); } catch (e) { }
       code = String(code || "").trim().toUpperCase();
       const s = await getDoc(doc(db, "joinCodes", code));
       if (!s.exists()) throw new Error("참여 코드가 맞지 않아요");
@@ -148,6 +150,7 @@ function localStore() {
     signIn: async () => { }, signUp: async () => { }, signOut: async () => { }, verify: async () => { }, reset: async () => { }, refresh: async () => true,
     async loadMe() { return D.orgId ? { orgId: D.orgId, name: D.name } : null; },
     async createOrg({ orgName, myName, roles, seed }) {
+      try { await auth.currentUser.getIdToken(true); } catch (e) { } // 이메일 인증 정보를 새로 받기
       const orgId = "local-org"; D.orgId = orgId; D.name = myName;
       D.orgs = { [orgId]: { doc: { name: orgName, owner: "local", joinCode: "TEST01", ...clean(seed) }, members: { local: { name: myName, email: "기기 전용", roles: ["admin", "staff", "mid", "final", "buyer"], active: true } } } };
       persist(); return orgId;
