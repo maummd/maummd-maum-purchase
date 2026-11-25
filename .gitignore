@@ -14,3 +14,4 @@ seed/
 물품구매관리_백업_*.json
 web/local.html
 web/
+node_modules
