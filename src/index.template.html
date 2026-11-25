@@ -680,7 +680,7 @@ function toggleCheck(id,cycle){
 }
 function addReq(site,name,qty='',reason='',surveyId=''){S.requests.push({id:uid(),at:new Date().toISOString(),by:AUTH.uid,byName:myName(),site,name,qty,reason,surveyId,status:'submitted'})}
 function finishReqs(o,st){(o.reqIds||[]).forEach(i=>{const r=S.requests.find(x=>x.id===i);if(r)r.status=st})}
-const errMsg=e=>{const c=(e&&e.code)||'';return ({'auth/invalid-credential':'이메일 또는 비밀번호가 맞지 않아요','auth/wrong-password':'비밀번호가 맞지 않아요','auth/user-not-found':'가입되지 않은 이메일이에요','auth/email-already-in-use':'이미 가입된 이메일이에요 — 로그인해 주세요','auth/weak-password':'비밀번호는 6자 이상이어야 해요','auth/invalid-email':'이메일 형식이 맞지 않아요','auth/too-many-requests':'시도가 너무 많아요 — 잠시 뒤 다시 해 주세요','auth/network-request-failed':'인터넷 연결을 확인해 주세요','permission-denied':'권한이 없어요'}[c]||((e&&e.message)||'문제가 생겼어요'))+(c?` (${c})`:'')};
+const errMsg=e=>{const c=(e&&e.code)||'';return ({'auth/invalid-credential':'이메일 또는 비밀번호가 맞지 않아요','auth/wrong-password':'비밀번호가 맞지 않아요','auth/user-not-found':'가입되지 않은 이메일이에요','auth/email-already-in-use':'이미 가입된 이메일이에요 — 로그인해 주세요','auth/weak-password':'비밀번호는 6자 이상이어야 해요','auth/invalid-email':'이메일 형식이 맞지 않아요','auth/too-many-requests':'시도가 너무 많아요 — 잠시 뒤 다시 해 주세요','auth/network-request-failed':'인터넷 연결을 확인해 주세요','permission-denied':'권한이 없어요 — Firestore 규칙 게시를 확인하세요','auth/configuration-not-found':'서버에서 이메일 로그인이 아직 켜져 있지 않아요 (Firebase Authentication → 이메일/비밀번호 사용)','auth/operation-not-allowed':'서버에서 이메일/비밀번호 로그인이 꺼져 있어요'}[c]||((e&&e.message)||'문제가 생겼어요'))+(c?` (${c})`:'')};
 
 document.addEventListener('click',async e=>{
   const bg=e.target.closest('[data-bg]');if(bg&&e.target===bg){closeModal();return}
