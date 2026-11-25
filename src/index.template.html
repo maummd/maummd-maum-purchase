@@ -3,6 +3,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2F5D50">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>물품 구매 관리</title>
 <style>
 :root{--bg:#F4F5F1;--card:#fff;--ink:#22302C;--sub:#66726D;--line:#E0E4DE;--brand:#2F5D50;--brand2:#3E7A69;--soft:#E6F0EC;
@@ -279,7 +283,7 @@ function vAuth(){
    <button class="btn" style="width:100%;margin-top:12px" data-act="${authMode==='up'?'signUp':'signIn'}">${authMode==='up'?'가입하기':'로그인'}</button>
    ${authMode==='in'?'<button class="btn ghost sm" style="margin-top:8px" data-act="resetPw">비밀번호를 잊었어요</button>':''}`}
    ${authMsg?`<div class="alert e" style="margin-top:10px">${esc(authMsg)}</div>`:''}</div>
-   <p class="muted" style="text-align:center">직원은 가입 후 기관 참여 코드를 넣으면 수요조사에 참여할 수 있어요.</p>`;
+   <p class="muted" style="text-align:center">직원은 가입 후 기관 참여 코드를 넣으면 수요조사에 참여할 수 있어요.</p>`+webCard();
 }
 function vSetup(){
   return hdr('기관 연결',esc(AUTH?AUTH.email:''))+`
@@ -461,7 +465,8 @@ function vSettings(){
    ${ST.mode==='local'?`<label class="f">시험용 — 내 역할 바꾸기</label><div class="row w">${['staff','mid','final','buyer','admin'].map(r=>`<button class="chip ${myRoles().includes(r)?'on':''}" data-testrole="${r}">${ROLES[r]}</button>`).join('')}</div>`:''}</div>
   ${adm?membersCard():''}
   ${has('final')||adm?payKeyCard():''}
-  ${isMgr()?notiCard(L.noti):staffNotiCard()}
+  ${webCard()}
+  ${IS_WEB?'':(isMgr()?notiCard(L.noti):staffNotiCard())}
   ${isMgr()?`<div class="card"><h2>기관 · 결제 정보 ${adm?'':'<span class="bd">관리자만 수정</span>'}</h2>
    <label class="f">기관 이름</label><input data-org="name" value="${esc(orgName())}" ${dis}>
    <label class="f">센터 사업자등록번호</label><input data-st="bizNo" value="${esc(st.bizNo)}" inputmode="numeric" ${dis}>
@@ -669,7 +674,7 @@ function exportDoc(html,name){
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=name+'.html';document.body.appendChild(a);a.click();a.remove();toast('문서 파일을 저장했어요')}catch(e){toast('문서를 만들지 못했어요')}
 }
 async function copy(t,msg){try{if(window.AdminAndroid&&AdminAndroid.copyText(t)){toast(msg);return}await navigator.clipboard.writeText(t);toast(msg)}catch(e){toast(t)}}
-function share(t){if(window.AdminAndroid&&AdminAndroid.shareText){AdminAndroid.shareText(t);return}copy(t,'메시지를 복사했어요')}
+function share(t){if(window.AdminAndroid&&AdminAndroid.shareText){AdminAndroid.shareText(t);return}if(navigator.share){navigator.share({text:t}).catch(()=>{});return}copy(t,'메시지를 복사했어요')}
 
 /* ===================== 동작 ===================== */
 function toggleCheck(id,cycle){
@@ -701,7 +706,7 @@ document.addEventListener('click',async e=>{
   if(d.delreq){S.requests=S.requests.filter(x=>x.id!==d.delreq);re();toast('취소했어요');return}
   if(d.svclose){S.surveys.find(s=>s.id===d.svclose).open=false;re();toast('수요조사를 마감했어요');return}
   if(d.svopen){S.surveys.find(s=>s.id===d.svopen).open=true;re();return}
-  if(d.svshare){const s=S.surveys.find(x=>x.id===d.svshare);share(`[${orgName()}] 📝 ${s.title}\n${s.due?md(s.due)+'까지 ':''}필요한 물품을 ‘물품 구매 관리’ 앱 → 수요 탭에서 내 주세요.${s.note?'\n'+s.note:''}${has('admin')?`\n처음이면 가입 후 참여 코드 ${O().joinCode} 를 넣어 주세요.`:''}`);return}
+  if(d.svshare){const s=S.surveys.find(x=>x.id===d.svshare);share(`[${orgName()}] 📝 ${s.title}\n${s.due?md(s.due)+'까지 ':''}필요한 물품을 ‘물품 구매 관리’ 앱 → 수요 탭에서 내 주세요.${s.note?'\n'+s.note:''}\n${WEB_URL}${has('admin')?`\n처음이면 가입 후 참여 코드 ${O().joinCode} 를 넣어 주세요.`:''}`);return}
   // 중간관리자: 수요 검수
   if(d.reqok||d.reqno){const id=d.reqok||d.reqno,r=S.requests.find(x=>x.id===id);const q=($('#rq-'+id)||{}).value,n=($('#rn-'+id)||{}).value||'';
     if(d.reqno&&!n.trim()){toast('반려 사유를 적어 주세요');$('#rn-'+id).focus();return}
@@ -751,6 +756,7 @@ document.addEventListener('click',async e=>{
   if(d.testrole){let r=myRoles();r=r.includes(d.testrole)?r.filter(x=>x!==d.testrole):[...r,d.testrole];ST.setMyRoles(r.length?r:['staff']);return}
   switch(d.act){
     case 'closeModal':closeModal();break;
+    case 'pwaInstall':if(_ip){_ip.prompt();_ip=null}break;
     case 'copyBiz':copy(SET().bizNo,'사업자등록번호를 복사했어요');break;
     case 'newOrder':window._resubmit=false;orderForm();break;
     case 'newReq':reqForm();break;
@@ -765,7 +771,7 @@ document.addEventListener('click',async e=>{
     case 'payAllCoupang':needKey(()=>{const ok=by('pay').filter(o=>(o.vendor||'쿠팡')==='쿠팡');if(!ok.length){toast('결제할 쿠팡 주문이 없어요');return}payQueue=ok.map(o=>o.id);payPending=payQueue.shift();copy(SET().bizNo,`사업자번호 복사됨 · ${ok.length}건 중 1번째를 열어요`);setTimeout(()=>openShop(shopUrl(ord(payPending))),400)});break;
     case 'setPayKey':{const a=$('#pk1').value,b=$('#pk2').value;if(!/^\d{4,8}$/.test(a)){toast('숫자 4~8자리로 정해 주세요');return}if(a!==b){toast('두 번 넣은 키가 달라요');return}
       const salt=uid()+uid();try{await ST.setPayKey(ORG,{salt,hash:await sha(salt+a)});$('#pk1').value=$('#pk2').value='';$('#pkState').textContent='✅ 저장했어요';toast('결제 방지 키를 저장했어요 — 구매 담당에게만 알려 주세요')}catch(err){toast(errMsg(err))}break}
-    case 'shareCode':share(`[${orgName()}] 물품 구매 관리 앱\n1) 앱 설치 후 이메일로 가입\n2) 참여 코드 ${O().joinCode} 입력\n3) 수요 탭에서 필요한 물품을 내 주세요`);break;
+    case 'shareCode':share(`[${orgName()}] 물품 구매 관리\n1) 아래 주소를 열고 이메일로 가입 (설치 필요 없음)\n${WEB_URL}\n2) 참여 코드 ${O().joinCode} 입력\n3) 수요 탭에서 필요한 물품을 내 주세요`);break;
     case 'newCode':try{await ST.newJoinCode(ORG,O().joinCode);toast('새 참여 코드를 만들었어요 — 예전 코드는 못 써요')}catch(err){toast(errMsg(err))}break;
     case 'editItems':editItemsForm();break;
     case 'saveItems':{const its=[],bad=[];$('#eItems').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{const [s,c,n,cy,r,st]=l.split('|').map(x=>(x||'').trim());const site=SITE_BY_NAME[s],cycle=CYC_BY_NAME[cy];if(!site||!n||!cycle){bad.push(i+1);return}const old=ITEMS().find(x=>x.site===site&&x.name===n);its.push({id:old?old.id:uid(),site,cat:c||'기타',name:n,cycle,rule:r||'',stock:/^o$/i.test(st||'')})});
@@ -820,6 +826,10 @@ ST.onAuth(u=>{AUTH=u;if(UNSUB){UNSUB();UNSUB=null}ORG=null;ready=false;
   if(!u.verified){view='auth';render();return}
   startOrg();
 });
+let _ip=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_ip=e;if(view==='settings'||view==='auth')render()});
+const IS_WEB=!window.AdminAndroid,WEB_URL='https://maummd.github.io/maummd-maum-purchase/';
+function webCard(){if(!IS_WEB||matchMedia('(display-mode: standalone)').matches)return '';
+  return `<div class="card"><h2>📲 홈 화면에 추가</h2><p class="muted" style="font-size:12.5px">설치 없이 이 주소로 바로 써요. 홈 화면에 추가하면 앱처럼 아이콘이 생겨요.<br>안드로이드: 크롬 메뉴(⋮) → ‘홈 화면에 추가’ · 아이폰: 사파리 공유 → ‘홈 화면에 추가’</p>${_ip?'<button class="btn" style="margin-top:8px" data-act="pwaInstall">홈 화면에 추가</button>':''}</div>`}
 window.nuBack=function(){if($('#modal').innerHTML){closeModal();return true}const T=tabs();if(ORG&&view!==T[0][0]){view=T[0][0];render();scrollTo(0,0);return true}return false};
 window.__test={S:()=>S,buildReminders,myQueue,monthDoc,handoverDoc,bizValid,sha};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(payPending)onReturn();syncReminders()}});
