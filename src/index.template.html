@@ -827,7 +827,7 @@ ST.onAuth(u=>{AUTH=u;if(UNSUB){UNSUB();UNSUB=null}ORG=null;ready=false;
   startOrg();
 });
 let _ip=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_ip=e;if(view==='settings'||view==='auth')render()});
-const IS_WEB=!window.AdminAndroid,WEB_URL='https://maummd.github.io/maummd-maum-purchase/';
+const IS_WEB=!window.AdminAndroid,WEB_URL='https://maummd.github.io/purchase/';
 function webCard(){if(!IS_WEB||matchMedia('(display-mode: standalone)').matches)return '';
   return `<div class="card"><h2>📲 홈 화면에 추가</h2><p class="muted" style="font-size:12.5px">설치 없이 이 주소로 바로 써요. 홈 화면에 추가하면 앱처럼 아이콘이 생겨요.<br>안드로이드: 크롬 메뉴(⋮) → ‘홈 화면에 추가’ · 아이폰: 사파리 공유 → ‘홈 화면에 추가’</p>${_ip?'<button class="btn" style="margin-top:8px" data-act="pwaInstall">홈 화면에 추가</button>':''}</div>`}
 window.nuBack=function(){if($('#modal').innerHTML){closeModal();return true}const T=tabs();if(ORG&&view!==T[0][0]){view=T[0][0];render();scrollTo(0,0);return true}return false};
