@@ -1,0 +1,16 @@
+.gradle/
+build/
+local.properties
+*.jks
+*.keystore
+.idea/
+*.iml
+node_modules/
+web/demo.html
+android/app/src/main/assets/
+*.json.bak
+seed/
+*.json.bak
+물품구매관리_백업_*.json
+web/local.html
+web/

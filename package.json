@@ -1,0 +1,11 @@
+{
+  "name": "maum-purchase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "물품 구매 관리 (maumm.org)",
+  "scripts": { "build": "node build.mjs", "build:local": "LOCAL=1 node build.mjs" },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "firebase": "^11.10.0"
+  }
+}

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2F5D50">
+<title>물품 구매 관리</title>
+<style>
+:root{--bg:#F4F5F1;--card:#fff;--ink:#22302C;--sub:#66726D;--line:#E0E4DE;--brand:#2F5D50;--brand2:#3E7A69;--soft:#E6F0EC;
+--clinic:#3A6894;--center:#2F7A56;--brain:#8A5BA8;--warn:#B5602A;--wbg:#FBEEE2;--bad:#B03A3A;--bbg:#F8E3E3;--ok:#2F7A56;--okbg:#E2F1E8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;
+ padding:calc(env(safe-area-inset-top) + 8px) 0 calc(env(safe-area-inset-bottom) + 84px);word-break:keep-all}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid #D3D9D2;border-radius:10px;padding:9px 10px;width:100%}
+textarea{min-height:70px;resize:vertical}
+label.f{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px;font-weight:700}
+header{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+header h1{font-size:19px;flex:1;line-height:1.25}
+header h1 small{display:block;font-size:12px;color:var(--sub);font-weight:400}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:18px;flex:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3{font-size:13.5px;margin:12px 0 6px;color:var(--brand)}
+.muted{color:var(--sub);font-size:13px}
+.btn{background:var(--brand);color:#fff;border-radius:10px;padding:9px 14px;font-weight:700;white-space:nowrap}
+.btn.ghost{background:var(--soft);color:var(--brand)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.danger{background:var(--bbg);color:var(--bad)}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;align-items:center}
+.row.w{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bd{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--bg);color:var(--sub);border:1px solid var(--line);white-space:nowrap}
+.bd.ok{background:var(--okbg);color:var(--ok);border-color:transparent}
+.bd.w{background:var(--wbg);color:var(--warn);border-color:transparent}
+.bd.e{background:var(--bbg);color:var(--bad);border-color:transparent}
+.site{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;color:#fff}
+.s-clinic{background:var(--clinic)}.s-center{background:var(--center)}.s-brain{background:var(--brain)}
+.task{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.task:first-child{border-top:none}
+.ck{width:26px;height:26px;border-radius:8px;border:2px solid #C8CFC7;flex:none;display:grid;place-items:center;font-weight:900;color:#fff;margin-top:1px}
+.ck.on{background:var(--ok);border-color:var(--ok)}
+.ck.half{background:linear-gradient(90deg,var(--ok) 50%,transparent 50%);border-color:var(--ok)}
+.task .t{font-weight:700}
+.task .d{font-size:12.5px;color:var(--sub)}
+.task.done .t{color:var(--sub);text-decoration:line-through}
+.alert{font-size:13.5px;border-radius:10px;padding:9px 11px;margin-bottom:8px}
+.alert.w{background:var(--wbg);color:var(--warn)}.alert.e{background:var(--bbg);color:var(--bad)}.alert.ok{background:var(--okbg);color:var(--ok)}
+.biz{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--soft);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.biz b{font-size:18px;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.chip{padding:6px 12px;border-radius:99px;border:1px solid var(--line);font-size:13px;white-space:nowrap;background:#fff}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stock{display:flex;gap:4px}
+.stock button{padding:5px 8px;border-radius:8px;border:1px solid var(--line);font-size:12.5px;background:#fff}
+.stock button.on.ok{background:var(--okbg);color:var(--ok);border-color:var(--ok);font-weight:700}
+.stock button.on.low{background:var(--wbg);color:var(--warn);border-color:var(--warn);font-weight:700}
+.stock button.on.out{background:var(--bbg);color:var(--bad);border-color:var(--bad);font-weight:700}
+.ord{padding:11px 0;border-top:1px solid var(--line)}
+.ord:first-child{border-top:none}
+.ord .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub)}
+.ord .n{font-weight:700;margin-top:2px}
+.money{font-variant-numeric:tabular-nums;font-weight:700}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.sum div{background:var(--bg);border-radius:10px;padding:8px 4px}
+.sum b{display:block;font-size:17px;color:var(--brand)}
+.sum span{font-size:11.5px;color:var(--sub)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--sub);font-weight:700;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);display:flex;padding:6px 0 calc(env(safe-area-inset-bottom) + 6px);z-index:5}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--sub);gap:1px;padding:4px 0;position:relative}
+nav button .ic{font-size:20px;line-height:1.2}
+nav button.on{color:var(--brand);font-weight:700}
+nav .dot[hidden]{display:none}
+nav .dot{position:absolute;top:2px;left:55%;min-width:16px;height:16px;border-radius:8px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:15}
+.modal .sheet{background:#fff;width:100%;max-width:640px;margin:0 auto;border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:90vh;overflow:auto}
+.modal h3{font-size:16px;margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:99px;font-size:13.5px;opacity:0;transition:.2s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+.empty{text-align:center;color:var(--sub);font-size:13px;padding:14px 0}
+.x{font-size:19px;color:var(--sub);line-height:1;padding:0 4px;margin-left:auto}
+.steps li{margin:0 0 8px 18px}
+.steps b{color:var(--brand)}
+dl dt{font-size:12px;color:var(--sub);margin-top:8px;font-weight:700}
+dl dd{white-space:pre-wrap}
+.line{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.line .ln{flex:1;min-width:48px;text-align:center;background:var(--bg);border-radius:10px;padding:6px 2px}
+.line .ln b{display:block;font-size:17px;color:var(--sub)}.line .ln span{font-size:10.5px;color:var(--sub);line-height:1.2;display:block}
+.line .ln.on{background:var(--wbg)}.line .ln.on b{color:var(--warn)}
+.line i{color:#B7C0B8;font-style:normal;font-size:12px}
+button.alert{border:none;font:inherit;cursor:pointer}
+input:disabled{background:#F2F3F0;color:var(--sub)}
+</style></head><body>
+<div class="wrap" id="app"><div class="empty" style="padding-top:40vh">불러오는 중…</div></div>
+<nav id="nav" hidden></nav>
+<div class="toast" id="toast"></div>
+<div id="modal"></div>
+<datalist id="dlItems"></datalist>
+<script>/*BUNDLE*/</script>
+<script>
+/* ===================== 물품 구매 관리 =====================
+   근거: 「물품 구매 업무 인수인계서 및 체크리스트」 (외래 병원 · 센터 · 브레인)
+   결재 라인: 직원 수요 → 중간관리자 검수 → 최종관리자(원장님) 결재 → 구매 담당 결제(결제 방지 키) → 중간관리자 수령 검수 */
+const ST=window.MP_STORE;
+const SITES={clinic:'외래 병원',center:'센터',brain:'브레인'};
+const CYCLES={M1:'월 1회',W1:'주 1회',W2:'주 2회',ASK:'필요 시',REQ:'요청 시',AFTER:'주문 후'};
+const VENDORS=['쿠팡','네이버','기타'];
+const ROLES={staff:'직원',mid:'중간관리자',final:'최종관리자 (원장님)',buyer:'구매 담당',admin:'관리자'};
+const ROLE_DESC={staff:'수요 내기',mid:'수요 · 주문 검수, 수령 검수',final:'최종 결재',buyer:'주문서 작성 · 결제',admin:'구성원 · 설정 관리'};
+const STAGE={review:['중간관리자 검수','w'],final:['원장님 결재','w'],pay:['결제 대기','ok'],ship:['배송 중','w'],arrived:['도착 · 수령 검수','w'],done:['검수 완료','ok'],issue:['문제 (누락 · 파손)','e'],reject:['반려','e']};
+const REQ_ST={submitted:['검수 대기','w'],accepted:['검수 통과 · 구매 대기','ok'],rejected:['반려','e'],ordered:['주문 진행 중','w'],done:['받음','ok']};
+const DEFAULT_BIZ='207-91-38162';
+let _n=0;const uid=()=>Date.now().toString(36)+(_n++).toString(36)+Math.random().toString(36).slice(2,5);
+const DEFAULT_ROUTINE=()=>[
+ ['M1','원장님 및 데스크 간호사 간식 조사·구매'],['M1','센터 치료진 간식 조사·구매'],['M1','브레인 간식 조사·구매'],
+ ['W1','외래 병원 사무용품 및 소모품 재고 확인'],['W1','센터 사무용품 및 생활 소모품 재고 확인'],['W1','쌀 재고 확인 및 필요 시 구매'],
+ ['W2','레토르트 식품 주문 및 식사 전날 도착 여부 확인'],['ASK','김수용 씨에게 제과제빵 재료 필요 여부 문의'],
+ ['ASK','외래 병원·센터·브레인 추가 요청 물품 구매'],['AFTER','배송 완료 및 실제 물품 수령 여부 확인']].map(([c,t])=>({id:uid(),cycle:c,text:t}));
+const DEFAULT_ITEMS=()=>[
+ ['clinic','간식','원장님 간식','M1','널담 베이글, 우유, 두유 위주 구매. 부족하면 수시 구매',false],
+ ['clinic','간식','데스크 간호사 간식','M1','간호사분께 필요한 간식을 확인하고 구매 (임의로 고르지 않기)',false],
+ ['clinic','사무·소모품','외래 복합기 잉크','W1','복합기에 맞는 잉크 종류 · 모델명 · 호환 여부, 기존 구매 내역 확인 후 구매',true],
+ ['clinic','기타','기타 요청 물품','REQ','외래 병원 요청 물품 — 품목 · 규격 · 수량 확인 후 주문',false],
+ ['center','간식·식품','치료진 간식','M1','필요한 간식 조사 후 구매. 재고 부족 시 추가 구매',false],
+ ['center','간식·식품','쌀','W1','재고 확인 후 구매. 치료진 및 회원분 요청 시 수시 구매',true],
+ ['center','간식·식품','레토르트 식품','W2','식사 전날까지 도착하도록 주문',false],
+ ['center','사무·생활 소모품','대형 롤휴지','W1','남은 수량 확인',true],
+ ['center','사무·생활 소모품','물티슈','W1','남은 수량 확인',true],
+ ['center','사무·생활 소모품','A4 용지','W1','재고 확인 후 구매',true],
+ ['center','사무·생활 소모품','B5 용지','W1','A4와 규격 구분하여 구매',true],
+ ['center','사무·생활 소모품','주방세제','W1','재고 확인',true],
+ ['center','사무·생활 소모품','세탁세제','W1','재고 확인',true],
+ ['center','사무·생활 소모품','종이컵 10oz','W1','용량 확인 후 구매 (실제 구매 규격 확인 필요)',true],
+ ['center','사무·생활 소모품','작은 종이컵','W1','기존 구매 제품의 용량 확인',true],
+ ['center','사무·생활 소모품','종이용기 1,000cc','W1','기존 구매 제품의 규격 확인 (실제 구매 규격 확인 필요)',true],
+ ['center','사무·생활 소모품','탁구공','W1','남은 수량 및 추가 필요 여부 확인',true],
+ ['center','제과제빵','제과제빵용 대용량 버터','ASK','김수용 씨에게 필요 수량 및 기존 제품 확인',false],
+ ['center','제과제빵','제과제빵용 설탕','ASK','김수용 씨에게 필요 수량 및 종류 확인',false],
+ ['center','제과제빵','제과제빵용 머핀컵','ASK','김수용 씨에게 크기 및 필요 수량 확인',false],
+ ['center','제과제빵','제과제빵용 밀가루','ASK','김수용 씨에게 종류 및 필요 수량 확인',false],
+ ['center','제과제빵','기타 제과제빵 재료','ASK','김수용 씨 요청에 따라 구매',false],
+ ['brain','간식','브레인 간식','M1','필요한 간식을 조사하여 구매. 재고 소진 또는 추가 요청 시 수시 구매. 센터와 재고 · 수량 구분',false]
+].map(([site,cat,name,cycle,rule,stock])=>({id:uid(),site,cat,name,cycle,rule,stock}));
+const DEFAULT_SETTINGS={bizNo:DEFAULT_BIZ,addr:{clinic:'',center:'',brain:''},approveItem:100000,approveOrder:200000};
+const DEFAULT_NOTI={on:true,time:'09:00',monthDay:1,weekDay:1,w2Days:[1,4],lunch:'11:50',cyc:true,order:true,approve:true};
+
+/* ===================== 상태 ===================== */
+let AUTH=null,ORG=null,UNSUB=null,ready=false;
+let S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};
+let BASE={};               // 서버에서 받은 마지막 모습 (바뀐 것만 저장하기 위해)
+const LK='mp-prefs-v1';
+let L;try{L=JSON.parse(localStorage.getItem(LK))||{}}catch(e){L={}}
+L.noti={...DEFAULT_NOTI,...(L.noti||{})};
+const saveL=()=>{try{localStorage.setItem(LK,JSON.stringify(L))}catch(e){}syncReminders()};
+const O=()=>S.org||{};
+const SET=()=>({...DEFAULT_SETTINGS,...(O().settings||{}),addr:{...DEFAULT_SETTINGS.addr,...((O().settings||{}).addr||{})}});
+const ITEMS=()=>O().items||[];
+const ROUTINE=()=>O().routine||[];
+const CHECKS=()=>O().checks||(S.org&&(S.org.checks={}))||{};
+const STOCK=()=>O().stock||(S.org&&(S.org.stock={}))||{};
+const myRoles=()=>(S.me&&S.me.roles)||[];
+const has=r=>myRoles().includes(r)||(r==='admin'&&O().owner===(AUTH&&AUTH.uid));
+const isMgr=()=>['mid','final','buyer','admin'].some(has);
+const myName=()=>(S.me&&S.me.name)||'';
+const orgName=()=>O().name||'구의연세정신건강의학과';
+
+function onData(part){
+  for(const k of Object.keys(part)){
+    S[k]=part[k];
+    if(Array.isArray(part[k]))BASE[k]=Object.fromEntries(part[k].map(x=>[x.id,JSON.stringify(x)]));
+    else if(k==='org')BASE.org=part[k]?Object.fromEntries(['name','settings','items','routine','checks','stock'].map(f=>[f,JSON.stringify(part[k][f]??null)])):{};
+  }
+  if(!S.me||S.me.active===false){if('me' in part){ready=false;view='gone';render()}return}
+  ready=true;
+  if(!$('#modal').innerHTML||part.me)render();else renderNav();
+  syncReminders();
+}
+// 바뀐 것만 서버에 저장합니다
+function save(){
+  if(!ORG)return;
+  const errs=e=>{console.error(e);toast('⚠️ 저장하지 못했어요 — 권한 또는 연결을 확인하세요')};
+  for(const col of ['requests','orders','surveys']){
+    const base=BASE[col]||{},cur=S[col]||[],ids=new Set(cur.map(x=>x.id));
+    cur.forEach(x=>{const j=JSON.stringify(x);if(base[x.id]!==j){base[x.id]=j;const {id,...d}=x;ST.put(ORG,col,id,d).catch(errs)}});
+    Object.keys(base).forEach(id=>{if(!ids.has(id)){delete base[id];ST.del(ORG,col,id).catch(errs)}});
+    BASE[col]=base;
+  }
+  if(S.org){const patch={};BASE.org=BASE.org||{};['name','settings','items','routine','checks','stock'].forEach(f=>{const j=JSON.stringify(S.org[f]??null);if(BASE.org[f]!==j){BASE.org[f]=j;patch[f]=S.org[f]}});
+    if(Object.keys(patch).length)ST.saveOrg(ORG,patch).catch(errs)}
+  syncReminders();
+}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>ymd(new Date());
+const won=n=>(Number(n)||0).toLocaleString('ko-KR')+'원';
+const DOW='일월화수목금토';
+const md=s=>{if(!s)return '-';const d=new Date(String(s).slice(0,10)+'T00:00');if(isNaN(d))return '-';return `${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)}
+function weekStart(d=new Date()){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);return x}
+function periodKey(cycle,d=new Date()){if(cycle==='M1')return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;if(cycle==='W1'||cycle==='W2')return 'W'+ymd(weekStart(d));return 'D'+ymd(d)}
+function periodLabel(cycle){if(cycle==='M1'){const d=new Date();return `${d.getMonth()+1}월`}if(cycle==='W1'||cycle==='W2'){const s=weekStart(),e=new Date(s);e.setDate(e.getDate()+6);return `${s.getMonth()+1}/${s.getDate()}~${e.getMonth()+1}/${e.getDate()}`}return '오늘'}
+const need=c=>c==='W2'?2:1;
+function doneCount(id,cycle){const c=CHECKS()[id+'|'+periodKey(cycle)];return c?(c.n||1):0}
+const isRegular=c=>['M1','W1','W2'].includes(c);
+const stamp=(note)=>({by:AUTH.uid,name:myName(),at:new Date().toISOString(),...(note?{note}:{})});
+function logStage(o,st,note){o.log=o.log||[];o.log.push({st,...stamp(note)})}
+const lastLog=(o,st)=>(o.log||[]).filter(l=>l.st===st).slice(-1)[0];
+const appCard=o=>{const st=SET();if((+o.price||0)>=st.approveItem)return true;if(!o.payGroup)return false;return S.orders.filter(x=>x.date===o.date&&x.payGroup===o.payGroup).reduce((a,x)=>a+(+x.price||0),0)>=st.approveOrder};
+const sumP=a=>a.reduce((s,o)=>s+(+o.price||0),0);
+const by=st=>S.orders.filter(o=>o.stage===st);
+
+/* ===================== 알림 목록 (할 일) ===================== */
+function myQueue(){
+  const q=[],t=today();
+  if(has('mid')){
+    const r=S.requests.filter(x=>x.status==='submitted');if(r.length)q.push({lvl:'w',go:'demand',txt:`📩 수요 검수 ${r.length}건`});
+    const o=by('review');if(o.length)q.push({lvl:'w',go:'order',of:'review',txt:`🔎 주문서 검수 ${o.length}건 · ${won(sumP(o))}`});
+    const a=S.orders.filter(o=>o.stage==='arrived'||(o.stage==='ship'&&o.eta&&o.eta<=t));if(a.length)q.push({lvl:'w',go:'order',of:'recv',txt:`📦 수령 검수 ${a.length}건`});
+  }
+  if(has('final')){const o=by('final');if(o.length)q.push({lvl:'w',act:'finalView',txt:`👨‍⚕️ 원장님 결재 ${o.length}건 · ${won(sumP(o))}`})}
+  if(has('buyer')){
+    const r=S.requests.filter(x=>x.status==='accepted');if(r.length)q.push({lvl:'w',go:'demand',txt:`🧾 검수 통과한 수요 ${r.length}건 — 주문서 작성`});
+    const p=by('pay');if(p.length)q.push({lvl:'ok',go:'order',of:'pay',txt:`💳 결재 완료 · 결제할 주문 ${p.length}건 · ${won(sumP(p))}`});
+    const rj=by('reject');if(rj.length)q.push({lvl:'e',go:'order',of:'all',txt:`↩️ 반려된 주문서 ${rj.length}건 — 고쳐서 다시 올리기`});
+    S.orders.forEach(o=>{
+      if(o.stage==='ship'&&o.eta&&o.eta<t)q.push({lvl:'e',go:'order',of:'recv',txt:`⚠️ ${o.name}: 배송 예정일(${md(o.eta)})이 지났어요`});
+      if(o.meal&&['ship','pay','final','review'].includes(o.stage)&&(!o.eta||o.eta>=o.meal))q.push({lvl:'e',go:'order',txt:`🍱 ${o.name}: 식사일(${md(o.meal)}) 전날까지 도착하지 않아요`});
+    });
+  }
+  if(has('buyer')||has('mid'))S.orders.filter(o=>o.stage==='issue').forEach(o=>q.push({lvl:'e',go:'order',of:'recv',txt:`⚠️ ${o.name}: ${o.issue||'누락 · 파손'} — 교환 또는 재주문`}));
+  return q;
+}
+
+/* ===================== 화면 ===================== */
+let view='home',siteF='all',orderF='open',repMonth=today().slice(0,7);
+function tabs(){
+  if(!isMgr())return [['demand','📝','수요'],['settings','⚙️','설정']];
+  const t=[['home','🏠','할 일'],['demand','📝','수요']];
+  if(has('buyer')||has('mid'))t.push(['check','📋','점검']);
+  t.push(['order','🛒','주문'],['report','📊','내역'],['settings','⚙️','설정']);
+  return t;
+}
+function renderNav(){
+  const n=$('#nav');if(!ORG||!S.me){n.hidden=true;return}
+  n.hidden=false;const q=isMgr()?myQueue().length:0;
+  n.innerHTML=tabs().map(([v,ic,l])=>`<button data-v="${v}" class="${view===v?'on':''}"><span class="ic">${ic}</span>${l}${v==='home'&&q?`<span class="dot">${q}</span>`:''}</button>`).join('');
+}
+function render(){
+  if(!ready&&view!=='auth'&&view!=='setup'&&view!=='gone')return;
+  const T=tabs().map(t=>t[0]);if(ORG&&S.me&&!['auth','setup','gone'].includes(view)&&!T.includes(view))view=T[0];
+  renderNav();
+  const V={home:vHome,demand:vDemand,check:vCheck,order:vOrder,report:vReport,settings:vSettings,auth:vAuth,setup:vSetup,gone:vGone}[view]||vHome;
+  $('#app').innerHTML=V();
+  fillDatalist();
+}
+function hdr(t,sub){return `<header><span class="logo">🛒</span><h1>${t}${sub?`<small>${sub}</small>`:''}</h1></header>`}
+function bizCard(){return `<div class="biz"><div><div class="muted" style="font-size:12px">센터 사업자등록번호 · 쿠팡 · 네이버 사업자 결제</div><b>${esc(SET().bizNo)}</b></div><button class="btn sm" data-act="copyBiz">복사</button></div>`}
+const roleBadges=r=>(r||[]).filter(x=>x!=='admin'||true).map(x=>`<span class="bd ${x==='final'?'w':x==='staff'?'':'ok'}">${ROLES[x]||x}</span>`).join(' ');
+
+/* ----- 로그인 · 가입 ----- */
+let authMode='in',authMsg='';
+function vAuth(){
+  return hdr('물품 구매 관리','구의연세정신건강의학과 · maumm.org')+`<div class="card">
+   <div class="chips"><button class="chip ${authMode==='in'?'on':''}" data-am="in">로그인</button><button class="chip ${authMode==='up'?'on':''}" data-am="up">처음 가입</button></div>
+   ${AUTH&&!AUTH.verified?`<div class="alert w">📧 ${esc(AUTH.email)} 로 보낸 인증 메일의 링크를 누른 뒤 ‘인증 확인’을 눌러 주세요.</div><div class="row"><button class="btn grow" data-act="checkVerify">인증 확인</button><button class="btn ghost grow" data-act="resendVerify">메일 다시 보내기</button></div><button class="btn ghost" style="width:100%;margin-top:8px" data-act="logout">다른 계정으로</button>`:`
+   <label class="f">이메일</label><input id="aEmail" type="email" autocomplete="email">
+   <label class="f">비밀번호 ${authMode==='up'?'(6자 이상)':''}</label><input id="aPw" type="password" autocomplete="${authMode==='up'?'new-password':'current-password'}">
+   ${authMode==='up'?'<label class="f">비밀번호 확인</label><input id="aPw2" type="password" autocomplete="new-password">':''}
+   <button class="btn" style="width:100%;margin-top:12px" data-act="${authMode==='up'?'signUp':'signIn'}">${authMode==='up'?'가입하기':'로그인'}</button>
+   ${authMode==='in'?'<button class="btn ghost sm" style="margin-top:8px" data-act="resetPw">비밀번호를 잊었어요</button>':''}`}
+   ${authMsg?`<div class="alert e" style="margin-top:10px">${esc(authMsg)}</div>`:''}</div>
+   <p class="muted" style="text-align:center">직원은 가입 후 기관 참여 코드를 넣으면 수요조사에 참여할 수 있어요.</p>`;
+}
+function vSetup(){
+  return hdr('기관 연결',esc(AUTH?AUTH.email:''))+`
+  <div class="card"><h2>참여 코드로 들어가기</h2><p class="muted">구매 담당자나 관리자에게 받은 6자리 코드를 넣어 주세요. 처음엔 ‘직원’으로 들어가고, 관리자가 역할을 정해 줘요.</p>
+   <label class="f">내 이름</label><input id="jName" placeholder="예: 홍길동">
+   <label class="f">참여 코드</label><input id="jCode" style="text-transform:uppercase;letter-spacing:3px" maxlength="6">
+   <button class="btn" style="width:100%;margin-top:12px" data-act="joinOrg">참여하기</button></div>
+  <div class="card"><h2>새 기관 만들기 <span class="muted" style="font-size:12px">처음 한 번만</span></h2><p class="muted">만든 사람이 관리자가 돼요.</p>
+   <label class="f">기관 이름</label><input id="cOrg" value="구의연세정신건강의학과">
+   <label class="f">내 이름</label><input id="cName">
+   <label class="f">내 역할</label>${['buyer','mid','final'].map(r=>`<label class="row" style="gap:8px;margin:3px 0"><input type="checkbox" class="cRole" value="${r}" ${r==='buyer'?'checked':''} style="width:20px;height:20px">${ROLES[r]} <span class="muted" style="font-size:12px">— ${ROLE_DESC[r]}</span></label>`).join('')}
+   <button class="btn ghost" style="width:100%;margin-top:12px" data-act="createOrg">기관 만들기</button></div>
+  ${ST.mode==='firebase'?'<button class="btn ghost" style="width:100%" data-act="logout">로그아웃</button>':''}`;
+}
+function vGone(){return hdr('물품 구매 관리','')+`<div class="card"><div class="alert e">이 기관에서 나가졌거나 구성원 정보가 없어요.</div><button class="btn" style="width:100%" data-act="leave">다른 기관 연결</button></div>`}
+
+/* ----- 할 일 (관리자) ----- */
+function vHome(){
+  const q=myQueue(),rl=myRoles();
+  const showRoutine=has('buyer')||has('mid');
+  const groups=[['M1','이번 달'],['W1','이번 주'],['W2','이번 주 (2회)'],['ASK','필요 시 · 주문 후']];
+  const regular=ROUTINE().filter(r=>isRegular(r.cycle)),done=regular.filter(r=>doneCount(r.id,r.cycle)>=need(r.cycle)).length;
+  return hdr('물품 구매 관리',`${esc(orgName())} · ${esc(myName())} · ${new Date().getMonth()+1}월 ${new Date().getDate()}일`)+
+  `<div class="row w" style="margin:-4px 0 10px">${roleBadges(rl.filter(r=>r!=='staff'))}</div>`+
+  ((has('buyer')||has('final'))?bizCard():'')+
+  (q.length?`<div class="card"><h2>내 차례 <span class="bd e">${q.length}</span></h2>${q.map(a=>`<button class="alert ${a.lvl}" style="display:block;width:100%;text-align:left" ${a.act?`data-act="${a.act}"`:`data-go="${a.go}"${a.of?` data-of="${a.of}"`:''}`}>${esc(a.txt)} ›</button>`).join('')}</div>`:'<div class="alert ok">✅ 지금 내 차례인 결재 · 검수 · 결제가 없어요</div>')+
+  (has('final')&&by('final').length?`<button class="btn" style="width:100%;margin-bottom:12px;padding:13px" data-act="finalView">👨‍⚕️ 결재하기 (${by('final').length}건)</button>`:'')+
+  lineCard()+
+  (showRoutine?`<div class="card"><h2>정기 업무 <span class="muted">${done}/${regular.length} 완료</span></h2>
+   <div class="bar"><i style="width:${regular.length?done/regular.length*100:0}%;background:var(--ok)"></i></div>
+   ${groups.map(([c,lab])=>{const list=ROUTINE().filter(r=>c==='ASK'?!isRegular(r.cycle):r.cycle===c);if(!list.length)return '';
+     return `<h3>${lab}${isRegular(c)?` <span class="muted">(${periodLabel(c)})</span>`:''}</h3>${list.map(r=>{const n=doneCount(r.id,r.cycle),nd=need(r.cycle),ok=n>=nd,ck=CHECKS()[r.id+'|'+periodKey(r.cycle)];
+      return `<div class="task ${ok&&isRegular(r.cycle)?'done':''}"><button class="ck ${ok?'on':n?'half':''}" data-rt="${r.id}">${ok?'✓':''}</button><div class="grow"><div class="t">${esc(r.text)}</div><div class="d">${CYCLES[r.cycle]}${isRegular(r.cycle)?` · ${n}/${nd}`:n?' · 오늘 함':''}${ck?` · ${esc(ck.name||'')} ${esc((ck.at||'').slice(5,10).replace('-','/'))}`:''}</div></div></div>`}).join('')}`}).join('')}</div>`:'')+
+  `<div class="row" style="margin-bottom:12px">${has('buyer')||has('mid')?'<button class="btn grow" data-act="newOrder">+ 주문서</button>':''}<button class="btn ghost grow" data-act="newReq">+ 수요 내기</button></div>`;
+}
+function lineCard(){
+  const c=k=>by(k).length,rq=S.requests.filter(r=>r.status==='submitted').length,acc=S.requests.filter(r=>r.status==='accepted').length;
+  const steps=[['직원 수요',rq+acc,'demand'],['중간관리자 검수',rq+c('review'),'demand'],['원장님 결재',c('final'),'order'],['결제 (방지 키)',c('pay'),'order'],['배송',c('ship'),'order'],['수령 검수',c('arrived'),'order']];
+  return `<div class="card"><h2>결재 라인</h2><div class="line">${steps.map(([l,n],i)=>`<div class="ln ${n?'on':''}"><b>${n}</b><span>${l}</span></div>${i<steps.length-1?'<i>›</i>':''}`).join('')}</div></div>`;
+}
+
+/* ----- 수요 ----- */
+function vDemand(){
+  const open=S.surveys.filter(s=>s.open).sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  const closed=S.surveys.filter(s=>!s.open).sort((a,b)=>(b.at||'').localeCompare(a.at||'')).slice(0,5);
+  const mine=S.requests.filter(r=>r.by===AUTH.uid).sort((a,b)=>b.at.localeCompare(a.at));
+  const mgrSurvey=has('mid')||has('buyer')||has('admin');
+  return hdr('수요조사',`${esc(orgName())} · ${esc(myName())}`)+`
+  ${open.length?open.map(sv=>surveyCard(sv,mgrSurvey)).join(''):'<div class="card"><div class="empty">진행 중인 수요조사가 없어요</div></div>'}
+  <div class="row" style="margin-bottom:12px"><button class="btn grow" data-act="newReq">+ 수요 내기</button>${mgrSurvey?'<button class="btn ghost grow" data-act="newSurvey">+ 수요조사 열기</button>':''}</div>
+  ${has('mid')?reviewReqCard():''}
+  ${has('buyer')?acceptedCard():''}
+  <div class="card"><h2>내가 낸 수요 <span class="muted">${mine.length}건</span></h2>${mine.length?mine.slice(0,30).map(r=>reqRow(r,true)).join(''):'<div class="empty">아직 낸 수요가 없어요</div>'}</div>
+  ${mgrSurvey&&closed.length?`<div class="card"><h2>마감된 수요조사</h2>${closed.map(sv=>`<div class="ord"><div class="row" style="justify-content:space-between"><span><b>${esc(sv.title)}</b> <span class="muted">${md(sv.due)} 마감 · ${S.requests.filter(r=>r.surveyId===sv.id).length}건</span></span><button class="btn sm ghost" data-svopen="${sv.id}">다시 열기</button></div></div>`).join('')}</div>`:''}`;
+}
+function surveyCard(sv,mgr){
+  const rs=S.requests.filter(r=>r.surveyId===sv.id);
+  const mineN=rs.filter(r=>r.by===AUTH.uid).length;
+  const late=sv.due&&sv.due<today();
+  let agg='';
+  if(mgr&&rs.length){const g={};rs.forEach(r=>{const k=r.site+'|'+r.name;(g[k]=g[k]||[]).push(r)});
+    agg=`<table style="margin-top:8px"><tr><th>품목</th><th>낸 사람 · 수량</th></tr>${Object.entries(g).sort((a,b)=>b[1].length-a[1].length).map(([k,list])=>{const [site,name]=k.split('|');return `<tr><td><span class="site s-${site}">${SITES[site][0]}</span> <b>${esc(name)}</b> <span class="bd">${list.length}명</span></td><td style="font-size:12px">${list.map(r=>`${esc(r.byName)} ${esc(r.qty||'')}`).join(', ')}</td></tr>`}).join('')}</table>`}
+  return `<div class="card" style="border-color:var(--brand2)"><h2><span>📝 ${esc(sv.title)}</span><span class="bd ${late?'e':'w'}">${sv.due?md(sv.due)+' 마감':'상시'}</span></h2>
+   ${sv.site&&sv.site!=='all'?`<span class="site s-${sv.site}">${SITES[sv.site]}</span> `:''}${sv.note?`<span class="muted">${esc(sv.note)}</span>`:''}
+   <div class="row" style="margin-top:8px;justify-content:space-between"><span class="muted">${mgr?`모인 수요 ${rs.length}건`:`내가 낸 수요 ${mineN}건`}</span><button class="btn sm" data-newreq-sv="${sv.id}">수요 내기</button></div>
+   ${agg}${mgr?`<div class="row" style="margin-top:8px"><button class="btn sm ghost" data-svclose="${sv.id}">마감</button><button class="btn sm ghost" data-svshare="${sv.id}">직원에게 알리기</button></div>`:''}</div>`;
+}
+function reqRow(r,own){
+  const [lab,cls]=REQ_ST[r.status]||['?',''];
+  return `<div class="ord"><div class="h"><span class="site s-${r.site}">${SITES[r.site]}</span>${own?'':esc(r.byName)+' · '}${md(r.at)}<span class="bd ${cls}">${lab}</span>${r.surveyId?`<span class="bd">${esc((S.surveys.find(s=>s.id===r.surveyId)||{}).title||'수요조사')}</span>`:''}</div>
+   <div class="n">${esc(r.name)}${r.qty?` · ${esc(r.qty)}`:''}</div>${r.reason?`<div class="muted" style="font-size:12.5px">${esc(r.reason)}</div>`:''}
+   ${r.midNote?`<div class="muted" style="font-size:12.5px">검수: ${esc(r.midName||'')} — ${esc(r.midNote)}</div>`:''}
+   ${own&&r.status==='submitted'?`<button class="btn sm ghost" style="margin-top:6px" data-delreq="${r.id}">취소</button>`:''}</div>`;
+}
+function reviewReqCard(){const rs=S.requests.filter(r=>r.status==='submitted').sort((a,b)=>a.at.localeCompare(b.at));
+  return `<div class="card" style="border-color:var(--warn)"><h2>🔎 수요 검수 <span class="bd w">${rs.length}</span></h2><p class="muted" style="font-size:12.5px">수량 · 필요성을 확인하고 통과 또는 반려해요. 통과한 수요는 구매 담당이 주문서로 만들어요.</p>
+  ${rs.length?rs.map(r=>`<div class="ord"><div class="h"><span class="site s-${r.site}">${SITES[r.site]}</span>${esc(r.byName)} · ${md(r.at)}${r.due?` · ${md(r.due)}까지 필요`:''}</div>
+   <div class="n">${esc(r.name)}</div>${r.reason?`<div class="muted" style="font-size:12.5px">${esc(r.reason)}</div>`:''}
+   <div class="two" style="margin-top:6px"><input id="rq-${r.id}" value="${esc(r.qty||'')}" placeholder="수량" style="padding:6px 8px;font-size:14px"><input id="rn-${r.id}" placeholder="검수 메모 (선택)" style="padding:6px 8px;font-size:14px"></div>
+   <div class="row" style="margin-top:6px"><button class="btn sm grow" data-reqok="${r.id}">✓ 검수 통과</button><button class="btn sm danger grow" data-reqno="${r.id}">반려</button></div></div>`).join(''):'<div class="empty">검수할 수요가 없어요</div>'}</div>`}
+function acceptedCard(){const rs=S.requests.filter(r=>r.status==='accepted');if(!rs.length)return '';
+  const g={};rs.forEach(r=>{const k=r.site+'|'+r.name;(g[k]=g[k]||[]).push(r)});
+  return `<div class="card" style="border-color:var(--ok)"><h2>🧾 구매 대기 (검수 통과) <span class="bd ok">${rs.length}</span></h2><p class="muted" style="font-size:12.5px">같은 품목은 한 주문서로 묶여요. 주문서는 바로 원장님 결재로 올라가요.</p>
+  ${Object.entries(g).map(([k,list])=>{const [site,name]=k.split('|');return `<div class="ord"><div class="row" style="justify-content:space-between"><div><span class="site s-${site}">${SITES[site]}</span> <b>${esc(name)}</b><div class="muted" style="font-size:12.5px">${list.map(r=>`${esc(r.byName)} ${esc(r.qty||'')}`).join(', ')}</div></div><button class="btn sm" data-mkorder="${esc(k)}">주문서 작성</button></div></div>`}).join('')}</div>`}
+
+/* ----- 점검 ----- */
+function vCheck(){
+  const items=ITEMS().filter(i=>siteF==='all'||i.site===siteF);
+  const cats=[...new Set(items.map(i=>i.site+'|'+i.cat))];
+  const lowN=ITEMS().filter(i=>{const s=STOCK()[i.id];return s&&(s.state==='low'||s.state==='out')}).length;
+  return hdr('물품 점검','장소별 체크리스트 · 재고 확인')+`
+  <div class="chips">${[['all','전체'],...Object.entries(SITES)].map(([k,l])=>`<button class="chip ${siteF===k?'on':''}" data-site="${k}">${l}</button>`).join('')}</div>
+  ${lowN?`<div class="alert w">부족 · 없음 ${lowN}개 — <button class="btn sm ghost" data-act="lowToReq">수요로 한꺼번에 올리기</button></div>`:''}
+  ${cats.map(key=>{const [site,cat]=key.split('|');const list=items.filter(i=>i.site===site&&i.cat===cat);
+   return `<div class="card"><h2><span><span class="site s-${site}">${SITES[site]}</span> ${esc(cat)}</span>${cat==='제과제빵'?'<span class="bd w">김수용 씨 확인 후 구매</span>':''}</h2>
+    ${list.map(i=>{const n=doneCount(i.id,i.cycle),ok=n>=need(i.cycle),st=STOCK()[i.id];
+     return `<div class="task"><button class="ck ${ok?'on':n?'half':''}" data-it="${i.id}">${ok?'✓':''}</button><div class="grow">
+      <div class="row" style="justify-content:space-between"><span class="t">${esc(i.name)}</span><span class="bd">${CYCLES[i.cycle]}</span></div>
+      <div class="d">${esc(i.rule)}</div>
+      ${i.stock?`<div class="row" style="margin-top:6px;justify-content:space-between"><div class="stock">${[['ok','충분'],['low','부족'],['out','없음']].map(([k,l])=>`<button class="${k} ${st&&st.state===k?'on':''}" data-stock="${i.id}" data-s="${k}">${l}</button>`).join('')}</div>${st?`<span class="muted" style="font-size:11.5px">${esc(st.name||'')} ${(st.at||'').slice(5,10).replace('-','/')}</span>`:''}</div>`:''}
+      <div style="margin-top:6px"><button class="btn sm ghost" data-buy="${i.id}">수요로 올리기</button> <button class="btn sm ghost" data-order-item="${i.id}">바로 주문서</button></div></div></div>`}).join('')}</div>`}).join('')}
+  <div class="card"><h2>구매 시 주의사항</h2><ul class="steps muted">
+   <li>원장님 간식은 주로 사는 품목(널담 베이글 · 우유 · 두유)을 먼저 확인해요.</li>
+   <li>간호사 간식은 임의로 고르지 말고 필요한 것을 확인해요.</li>
+   <li>복합기 잉크는 기존 제품의 모델명과 호환 여부를 확인해요.</li>
+   <li>센터와 브레인의 간식 재고 · 구매 수량은 따로 구분해요.</li>
+   <li>제과제빵 재료는 김수용 씨에게 품목과 수량을 물어본 뒤 구매해요.</li>
+   <li>종이컵 10oz · 종이용기 1,000cc는 실제 구매 규격을 확인해요.</li></ul></div>
+  ${has('admin')||has('buyer')?'<button class="btn ghost" style="width:100%;margin-bottom:12px" data-act="editItems">✏️ 품목 · 정기 업무 고치기</button>':''}`;
+}
+
+/* ----- 주문 ----- */
+function vOrder(){
+  const list=S.orders.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.id.localeCompare(a.id));
+  const F={open:o=>!['done','reject'].includes(o.stage),review:o=>o.stage==='review',final:o=>o.stage==='final',pay:o=>o.stage==='pay',recv:o=>['ship','arrived','issue'].includes(o.stage),all:()=>true};
+  const shown=list.filter(F[orderF]||F.open);
+  const payC=by('pay').filter(o=>(o.vendor||'쿠팡')==='쿠팡');
+  return hdr('주문서','검수 → 결재 → 결제 → 수령 검수')+`
+  ${has('buyer')||has('mid')?'<div class="row" style="margin-bottom:10px"><button class="btn grow" data-act="newOrder">+ 주문서</button></div>':''}
+  ${has('buyer')&&payC.length?`<div class="card" style="border-color:var(--ok)"><h2>🛒 쿠팡 결제 <span class="bd ok">결재 완료 ${payC.length}건 · ${won(sumP(payC))}</span></h2><p class="muted" style="font-size:12.5px;margin-bottom:8px">결제 방지 키를 넣으면 상품을 쿠팡 앱에서 차례로 열어요. 결제하고 돌아오면 금액 · 도착일을 기록해요.</p><div class="row"><button class="btn grow" data-act="payAllCoupang">🔒 차례로 결제하기</button><button class="btn ghost grow" data-act="openCart">쿠팡 장바구니</button></div></div>`:''}
+  <div class="chips">${[['open','진행 중'],['review',`검수 ${by('review').length}`],['final',`결재 ${by('final').length}`],['pay',`결제 ${by('pay').length}`],['recv',`수령 ${S.orders.filter(F.recv).length}`],['all','전체']].map(([k,l])=>`<button class="chip ${orderF===k?'on':''}" data-of="${k}">${l}</button>`).join('')}</div>
+  <div class="card">${shown.length?shown.map(orderRow).join(''):'<div class="empty">해당하는 주문서가 없어요</div>'}</div>
+  <div class="card"><h2>구매 업무 진행 순서</h2><ol class="steps">
+   <li><b>수요 · 재고 확인</b> — 직원 수요조사, 정해진 주기의 재고 점검</li>
+   <li><b>중간관리자 검수</b> — 수량 · 필요성 확인, 주문서 검수</li>
+   <li><b>원장님 결재</b> — 점심 회의 때 최종 결재 (10만 원 이상 · 대량은 원장님 앱카드)</li>
+   <li><b>결제</b> — 구매 담당이 결제 방지 키를 넣고 쿠팡 · 네이버 사업자 결제. 레토르트는 식사 전날까지 도착하도록</li>
+   <li><b>수령 검수</b> — 중간관리자가 실제 수량 · 제품 확인, 누락 · 파손 · 오배송은 교환 또는 재주문</li></ol></div>`;
+}
+function orderRow(o){
+  const [lab,cls]=STAGE[o.stage]||['?',''];
+  let rc=`<span class="bd ${cls}">${lab}</span>`;
+  if(o.stage==='ship'&&o.eta&&o.eta<today())rc='<span class="bd e">미도착</span>';
+  const b=[];const B=(attr,txt,k='')=>b.push(`<button class="btn sm ${k}" ${attr}>${txt}</button>`);
+  if(o.stage==='review'&&has('mid')){B(`data-midok="${o.id}"`,'✓ 검수 통과');B(`data-reject="${o.id}"`,'반려','danger')}
+  if(o.stage==='final'&&has('final')){B(`data-finalok="${o.id}"`,'✓ 결재');B(`data-reject="${o.id}"`,'반려','danger')}
+  if(o.stage==='pay'&&has('buyer')){if(o.vendor!=='기타')B(`data-shop="${o.id}"`,`🔒 ${o.vendor||'쿠팡'}에서 결제`);B(`data-paid="${o.id}"`,'🔒 결제 완료 기록',o.vendor!=='기타'?'ghost':'')}
+  if(o.stage==='ship'&&(has('buyer')||has('mid')))B(`data-arrived="${o.id}"`,'📦 도착했어요');
+  if(['ship','arrived'].includes(o.stage)&&has('mid')){B(`data-inspok="${o.id}"`,'✓ 수령 검수 완료');B(`data-issue="${o.id}"`,'누락 · 파손','danger')}
+  if(o.stage==='issue'&&has('buyer')&&!o.reordered)B(`data-reorder="${o.id}"`,'재주문서','ghost');
+  if(o.stage==='issue'&&has('mid'))B(`data-inspok="${o.id}"`,'해결 · 검수 완료','ghost');
+  if(o.stage==='reject'&&(has('buyer')||has('mid')))B(`data-resubmit="${o.id}"`,'고쳐서 다시 올리기','ghost');
+  if(['review','final','reject'].includes(o.stage)&&(has('buyer')||has('mid')))B(`data-edit="${o.id}"`,'고치기','ghost');
+  B(`data-hist="${o.id}"`,'결재 기록','ghost');
+  const L1=lastLog(o,'reject');
+  return `<div class="ord"><div class="h"><span class="site s-${o.site}">${SITES[o.site]}</span>${md(o.date)} · ${esc(o.vendor||'-')}${rc}${appCard(o)?'<span class="bd">원장님 앱카드</span>':''}</div>
+   <div class="row" style="justify-content:space-between"><div class="n">${esc(o.name)}${o.spec?` <span class="muted">${esc(o.spec)}</span>`:''} · ${esc(o.qty||'')}</div><span class="money">${won(o.price)}</span></div>
+   <div class="muted" style="font-size:12.5px">${signLine(o)}${o.eta?` · 배송 예정 ${md(o.eta)}`:''}${o.meal?` · 식사일 ${md(o.meal)}`:''}${o.note?` · ${esc(o.note)}`:''}${o.issue?` · 문제: ${esc(o.issue)}`:''}${o.stage==='reject'&&L1?` · 반려(${esc(L1.name)}): ${esc(L1.note||'')}`:''}</div>
+   <div class="row w" style="margin-top:6px">${b.join('')}</div></div>`;
+}
+function signLine(o){const p=[];const a=lastLog(o,'review'),f=lastLog(o,'final'),y=lastLog(o,'pay'),i=lastLog(o,'done');
+  if(o.reqIds&&o.reqIds.length)p.push(`수요 ${o.reqIds.length}건`);
+  if(a)p.push(`검수 ${esc(a.name)}`);if(f)p.push(`결재 ${esc(f.name)}`);if(y)p.push(`결제 ${esc(y.name)} ${md(y.at)}${o.orderNo?' #'+esc(o.orderNo):''}`);if(i)p.push(`수령검수 ${esc(i.name)}`);
+  return p.join(' → ')||`작성 ${esc((lastLog(o,'create')||{}).name||'')}`}
+
+/* ----- 내역 ----- */
+function vReport(){
+  const ms=[...new Set([today().slice(0,7),...S.orders.map(o=>(o.date||'').slice(0,7)).filter(Boolean)])].sort().reverse();
+  const os=S.orders.filter(o=>(o.date||'').startsWith(repMonth)&&o.stage!=='reject');
+  const paid=os.filter(o=>['ship','arrived','done','issue'].includes(o.stage));
+  const tot=sumP(paid);
+  const grp=f=>{const m={};paid.forEach(o=>{const k=f(o);m[k]=(m[k]||0)+(+o.price||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+  const cols={clinic:'var(--clinic)',center:'var(--center)',brain:'var(--brain)'};
+  return hdr('구매 내역','결제된 주문 기준 월별 합계')+`
+  <div class="row" style="margin-bottom:10px"><select id="repMonth" class="grow">${ms.map(m=>`<option value="${m}" ${m===repMonth?'selected':''}>${m.replace('-','년 ')}월</option>`).join('')}</select><button class="btn" data-act="printMonth">📄 문서</button></div>
+  <div class="card"><div class="sum"><div><b>${won(tot)}</b><span>결제 합계</span></div><div><b>${paid.length}</b><span>결제 건</span></div><div><b>${os.length-paid.length}</b><span>결재 · 결제 전</span></div></div></div>
+  <div class="card"><h2>장소별</h2>${grp(o=>o.site).length?grp(o=>o.site).map(([k,v])=>`<div style="margin-bottom:6px"><div class="row" style="justify-content:space-between;font-size:13.5px"><span class="site s-${k}">${SITES[k]}</span><span class="money">${won(v)}</span></div><div class="bar"><i style="width:${tot?v/tot*100:0}%;background:${cols[k]}"></i></div></div>`).join(''):'<div class="empty">이 달 결제가 없어요</div>'}
+   ${paid.length?`<h3>구매처별</h3><table>${grp(o=>o.vendor||'-').map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${won(v)}</td></tr>`).join('')}</table>`:''}</div>
+  <div class="card"><h2>물품 구매 관리 기록표</h2>${os.length?`<table><tr><th>주문일</th><th>품목 · 결재</th><th class="n">금액</th><th>상태</th></tr>${os.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(o=>`<tr><td>${md(o.date)}</td><td><span class="site s-${o.site}">${SITES[o.site][0]}</span> ${esc(o.name)} ${esc(o.qty||'')}<div class="muted" style="font-size:11.5px">${signLine(o)}</div></td><td class="n">${won(o.price)}</td><td style="font-size:12px">${STAGE[o.stage][0]}</td></tr>`).join('')}</table>`:'<div class="empty">기록이 없어요</div>'}</div>`;
+}
+
+/* ----- 설정 ----- */
+function vSettings(){
+  const st=SET(),adm=has('admin'),me=S.me||{};
+  const dis=adm?'':'disabled';
+  return hdr('설정',esc(orgName()))+`
+  <div class="card"><h2>내 정보</h2><label class="f">이름</label><input data-myname value="${esc(me.name||'')}">
+   <div class="row w" style="margin-top:8px">${roleBadges(me.roles)}</div><p class="muted" style="font-size:12px;margin-top:6px">${esc(AUTH.email||'')} ${ST.mode==='local'?'· 기기 전용 시험 모드':''}</p>
+   ${ST.mode==='local'?`<label class="f">시험용 — 내 역할 바꾸기</label><div class="row w">${['staff','mid','final','buyer','admin'].map(r=>`<button class="chip ${myRoles().includes(r)?'on':''}" data-testrole="${r}">${ROLES[r]}</button>`).join('')}</div>`:''}</div>
+  ${adm?membersCard():''}
+  ${has('final')||adm?payKeyCard():''}
+  ${isMgr()?notiCard(L.noti):staffNotiCard()}
+  ${isMgr()?`<div class="card"><h2>기관 · 결제 정보 ${adm?'':'<span class="bd">관리자만 수정</span>'}</h2>
+   <label class="f">기관 이름</label><input data-org="name" value="${esc(orgName())}" ${dis}>
+   <label class="f">센터 사업자등록번호</label><input data-st="bizNo" value="${esc(st.bizNo)}" inputmode="numeric" ${dis}>
+   ${bizValid(st.bizNo)?'<p class="muted" style="font-size:12px;margin-top:4px">✅ 사업자등록번호 검증번호 확인</p>':'<div class="alert e" style="margin:6px 0 0">사업자등록번호 검증번호가 맞지 않아요.</div>'}
+   <div class="two"><div><label class="f">원장님 앱카드 — 단일 품목 (원 이상)</label><input type="number" data-st="approveItem" value="${st.approveItem}" ${dis}></div><div><label class="f">원장님 앱카드 — 한 번 결제 합계</label><input type="number" data-st="approveOrder" value="${st.approveOrder}" ${dis}></div></div>
+   <h3>배송지</h3>${Object.entries(SITES).map(([k,l])=>`<label class="f">${l}</label><div class="row"><input class="grow" data-addr="${k}" value="${esc(st.addr[k]||'')}" placeholder="배송 주소" ${dis}><button class="btn sm ghost" data-copyaddr="${k}">복사</button></div>`).join('')}</div>
+  <div class="card"><h2>문서</h2><button class="btn ghost" data-act="printHandover">📄 인수인계서 만들기</button>${adm?' <button class="btn ghost" data-act="backup">전체 기록 내려받기</button>':''}</div>`:''}
+  <div class="card"><h2>계정</h2><div class="row"><button class="btn ghost grow" data-act="leave">기관 연결 끊기</button>${ST.mode==='firebase'?'<button class="btn ghost grow" data-act="logout">로그아웃</button>':''}</div></div>
+  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v2.0 · maumm.org</p>`;
+}
+function membersCard(){const ms=S.members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  return `<div class="card"><h2>구성원 · 결재 라인 <span class="bd">${ms.length}명</span></h2>
+   <div class="biz" style="margin:4px 0 10px"><div><div class="muted" style="font-size:12px">직원 참여 코드</div><b>${esc(O().joinCode||'-')}</b></div><div class="row"><button class="btn sm" data-act="shareCode">알리기</button><button class="btn sm ghost" data-act="newCode">새 코드</button></div></div>
+   <p class="muted" style="font-size:12px;margin-bottom:6px">새로 들어온 사람은 ‘직원’이에요. 역할을 눌러 결재 라인을 정해 주세요.</p>
+   ${ms.map(m=>`<div class="ord"><div class="row" style="justify-content:space-between"><b>${esc(m.name)}${m.id===AUTH.uid?' (나)':''}</b><span class="muted" style="font-size:11.5px">${esc(m.email||'')}</span></div>
+    <div class="row w" style="margin-top:4px">${['staff','mid','final','buyer','admin'].map(r=>`<button class="chip ${(m.roles||[]).includes(r)?'on':''}" data-mrole="${m.id}" data-r="${r}" style="padding:4px 9px;font-size:12px">${ROLES[r]}</button>`).join('')}</div>
+    ${m.id!==AUTH.uid?`<div style="margin-top:4px"><button class="btn sm ghost" data-mout="${m.id}">${m.active===false?'다시 들이기':'내보내기'}</button>${m.active===false?' <span class="bd e">내보냄</span>':''}</div>`:''}</div>`).join('')}</div>`}
+function payKeyCard(){return `<div class="card"><h2>🔒 결제 방지 키</h2><p class="muted" style="font-size:12.5px">구매 담당이 결제할 때 이 키를 넣어야 결제 화면이 열려요. 원장님(최종관리자)이 정하고 구매 담당에게만 알려 주세요. 5번 틀리면 10분간 잠겨요.</p>
+  <div class="two"><div><label class="f">새 키 (숫자 4~8자리)</label><input type="password" inputmode="numeric" id="pk1" maxlength="8"></div><div><label class="f">한 번 더</label><input type="password" inputmode="numeric" id="pk2" maxlength="8"></div></div>
+  <button class="btn" style="margin-top:10px" data-act="setPayKey">키 저장</button> <span class="muted" id="pkState" style="font-size:12px"></span></div>`}
+function staffNotiCard(){return `<div class="card"><h2>🔔 알림</h2><label class="row" style="gap:10px"><input type="checkbox" data-noti="on" ${L.noti.on?'checked':''} style="width:22px;height:22px"><span class="grow">수요조사 마감 전날 알림 받기</span></label><div class="row" style="margin-top:10px"><button class="btn ghost grow" data-act="notiPerm">알림 허용</button></div></div>`}
+function notiCard(N){const days=['일','월','화','수','목','금','토'];const up=buildReminders().slice(0,5);
+  return `<div class="card"><h2>🔔 내 알림 <span class="muted" style="font-size:12px">이 휴대폰</span></h2>
+   <label class="row" style="gap:10px;margin:4px 0"><input type="checkbox" data-noti="on" ${N.on?'checked':''} style="width:22px;height:22px"><b class="grow">휴대폰 알림 받기</b></label>
+   <div class="two"><div><label class="f">알림 시각</label><input type="time" data-noti="time" value="${N.time}"></div><div><label class="f">점심 회의 (결재)</label><input type="time" data-noti="lunch" value="${N.lunch}"></div></div>
+   ${has('buyer')||has('mid')?`<div class="two"><div><label class="f">월 1회 간식 — 매월</label><select data-noti="monthDay">${Array.from({length:28},(_,i)=>`<option value="${i+1}" ${+N.monthDay===i+1?'selected':''}>${i+1}일</option>`).join('')}</select></div>
+    <div><label class="f">주 1회 재고 — 매주</label><select data-noti="weekDay">${days.map((d,i)=>`<option value="${i}" ${+N.weekDay===i?'selected':''}>${d}요일</option>`).join('')}</select></div></div>
+   <label class="f">주 2회 레토르트 — 요일 2개</label><div class="row w">${days.map((d,i)=>`<button class="chip ${(N.w2Days||[]).map(Number).includes(i)?'on':''}" data-w2="${i}">${d}</button>`).join('')}</div>`:''}
+   <label class="f">알림 종류</label>
+   ${[['cyc','정기 구매 · 재고 점검'],['order','배송 도착 · 수령 검수 · 레토르트'],['approve','내 차례 (검수 · 결재 · 결제)']].map(([k,l])=>`<label class="row" style="gap:8px;margin:3px 0;font-size:14px"><input type="checkbox" data-noti="${k}" ${N[k]?'checked':''} style="width:20px;height:20px">${l}</label>`).join('')}
+   <div class="row" style="margin-top:10px"><button class="btn ghost grow" data-act="notiPerm">알림 허용</button><button class="btn ghost grow" data-act="notiTest">시험 알림</button></div>
+   <h3>다가오는 알림</h3>${up.length?up.map(r=>{const d=new Date(r.at);return `<div style="font-size:13px;padding:3px 0"><b>${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}</b> ${esc(r.title)}</div>`}).join(''):'<div class="muted">예정된 알림이 없어요</div>'}
+   <p class="muted" style="font-size:11.5px;margin-top:6px">알림은 앱을 열 때 받은 내용으로 맞춰져요. 새 결재 · 검수 요청을 바로 받으려면 하루 한 번 앱을 열어 주세요.</p></div>`}
+function bizValid(n){const d=String(n).replace(/\D/g,'').split('').map(Number);if(d.length!==10)return false;const w=[1,3,7,1,3,7,1,3,5];let s=0;for(let i=0;i<9;i++)s+=d[i]*w[i];s+=Math.floor(d[8]*5/10);return (10-s%10)%10===d[9]}
+
+/* ===================== 입력 창 ===================== */
+function modal(h){$('#modal').innerHTML=`<div class="modal" data-bg="1"><div class="sheet">${h}</div></div>`}
+function closeModal(){$('#modal').innerHTML='';render()}
+function fillDatalist(){const names=[...new Set([...ITEMS().map(i=>i.name),...S.orders.map(o=>o.name),...S.requests.map(r=>r.name)])];$('#dlItems').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('')}
+function siteSel(v,id='fSite'){return `<select id="${id}">${Object.entries(SITES).map(([k,l])=>`<option value="${k}" ${v===k?'selected':''}>${l}</option>`).join('')}</select>`}
+function shopUrl(o){if(o.url&&/^https?:\/\//.test(o.url))return o.url;const q=encodeURIComponent([o.name,o.spec].filter(Boolean).join(' '));
+  return o.vendor==='네이버'?`https://search.shopping.naver.com/search/all?query=${q}`:`https://www.coupang.com/np/search?q=${q}`}
+const lastUrl=(name,site)=>{const x=S.orders.filter(o=>o.name===name&&o.url).sort((a,b)=>(b.date||'').localeCompare(a.date||''));return (x.find(o=>o.site===site)||x[0]||{}).url||''};
+function openShop(url){if(window.AdminAndroid&&AdminAndroid.openUrl){AdminAndroid.openUrl(url);return}window.open(url,'_blank')}
+
+function orderForm(o={},title='주문서 작성'){
+  modal(`<h3>${title}</h3>${o.reqIds&&o.reqIds.length?`<div class="alert ok" style="font-size:12.5px">검수 통과한 수요 ${o.reqIds.length}건 — 저장하면 바로 원장님 결재로 올라가요</div>`:'<div class="alert w" style="font-size:12.5px">저장하면 중간관리자 검수 → 원장님 결재로 올라가요</div>'}
+   <div class="two"><div><label class="f">주문일</label><input type="date" id="fDate" value="${o.date||today()}"></div><div><label class="f">구분</label>${siteSel(o.site||'center')}</div></div>
+   <label class="f">구매 품목</label><input id="fName" list="dlItems" value="${esc(o.name||'')}" placeholder="예: 대형 롤휴지">
+   <div id="fPrev" class="muted" style="font-size:12px;margin-top:4px"></div>
+   <div class="two"><div><label class="f">규격</label><input id="fSpec" value="${esc(o.spec||'')}"></div><div><label class="f">수량</label><input id="fQty" value="${esc(o.qty||'')}"></div></div>
+   <div class="two"><div><label class="f">금액 (원)</label><input type="number" inputmode="numeric" id="fPrice" value="${o.price??''}"></div><div><label class="f">구매처</label><select id="fVendor">${VENDORS.map(v=>`<option ${o.vendor===v?'selected':''}>${v}</option>`).join('')}</select></div></div>
+   <div class="two"><div><label class="f">배송 예정일</label><input type="date" id="fEta" value="${o.eta||''}"></div><div><label class="f">식사일 (레토르트만)</label><input type="date" id="fMeal" value="${o.meal||''}"></div></div>
+   <label class="f">상품 링크 (쿠팡 · 네이버 주소 · 선택)</label><div class="row"><input id="fUrl" class="grow" value="${esc(o.url||'')}" inputmode="url"><button class="btn sm ghost" type="button" id="fFind">찾기</button></div>
+   <label class="f">결제 묶음 이름 (같이 결제할 주문끼리 · 선택)</label><input id="fGroup" value="${esc(o.payGroup||'')}">
+   <label class="f">메모</label><input id="fNote" value="${esc(o.note||'')}">
+   <div id="fWarn" style="margin-top:8px"></div>
+   <div class="row" style="margin-top:12px;justify-content:flex-end">${o.id?`<button class="btn danger" data-delorder="${o.id}">삭제</button><span class="grow"></span>`:''}<button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-saveorder="${o.id||''}">저장</button></div>`);
+  window._draft=o;
+  const warn=()=>{const p=+$('#fPrice').value||0,g=$('#fGroup').value.trim(),others=S.orders.filter(x=>x.id!==o.id&&x.date===$('#fDate').value&&g&&x.payGroup===g).reduce((a,x)=>a+(+x.price||0),0),m=[];
+    if(p>=SET().approveItem||(g&&others+p>=SET().approveOrder))m.push('<div class="alert w">💳 원장님 앱카드 결제 대상이에요</div>');
+    const meal=$('#fMeal').value,eta=$('#fEta').value;if(meal&&eta&&eta>=meal)m.push('<div class="alert e">🍱 식사일 전날까지 도착하지 않아요</div>');
+    $('#fWarn').innerHTML=m.join('')};
+  const upd=()=>{const nm=$('#fName').value.trim();const prev=S.orders.filter(x=>x.name===nm&&x.id!==o.id&&x.price).sort((a,b)=>b.date.localeCompare(a.date))[0];const it=ITEMS().find(i=>i.name===nm);
+    $('#fPrev').innerHTML=[prev?`지난 구매 ${md(prev.date)} · ${esc(prev.vendor||'')} · ${esc(prev.spec||'')} ${esc(prev.qty||'')} · ${won(prev.price)} <button class="btn sm ghost" id="fUsePrev">그대로 쓰기</button>`:'',it?`기준: ${esc(it.rule)}`:''].filter(Boolean).join('<br>');
+    const up=$('#fUsePrev');if(up)up.onclick=()=>{$('#fSpec').value=prev.spec||'';if(!$('#fQty').value)$('#fQty').value=prev.qty||'';$('#fPrice').value=prev.price||'';$('#fVendor').value=prev.vendor||'쿠팡';if(prev.url)$('#fUrl').value=prev.url;warn()};
+    if(!$('#fUrl').value&&nm){const lu=lastUrl(nm,$('#fSite').value);if(lu)$('#fUrl').value=lu}warn()};
+  $('#fFind').onclick=()=>openShop(shopUrl({name:$('#fName').value.trim(),spec:$('#fSpec').value.trim(),vendor:$('#fVendor').value}));
+  ['#fName','#fPrice','#fGroup','#fMeal','#fEta','#fDate'].forEach(s=>{$(s).addEventListener('input',upd);$(s).addEventListener('change',upd)});upd();
+}
+function reqForm(r={}){
+  const svs=S.surveys.filter(s=>s.open);
+  modal(`<h3>📝 수요 내기</h3><p class="muted" style="font-size:12.5px">필요한 물품을 적으면 중간관리자 검수 → 원장님 결재 → 구매로 이어져요.</p>
+   ${svs.length?`<label class="f">수요조사</label><select id="rSv"><option value="">(조사 없이 바로)</option>${svs.map(s=>`<option value="${s.id}" ${r.surveyId===s.id?'selected':''}>${esc(s.title)}</option>`).join('')}</select>`:''}
+   <div class="two"><div><label class="f">구분 (쓸 곳)</label>${siteSel(r.site||((S.surveys.find(s=>s.id===r.surveyId)||{}).site!=='all'&&(S.surveys.find(s=>s.id===r.surveyId)||{}).site)||'center')}</div><div><label class="f">필요한 날</label><input type="date" id="rDue" value="${r.due||''}"></div></div>
+   <label class="f">품목</label><input id="rName" list="dlItems" value="${esc(r.name||'')}" placeholder="예: 물티슈">
+   <label class="f">수량 · 규격</label><input id="rQty" value="${esc(r.qty||'')}" placeholder="예: 2박스">
+   <label class="f">필요한 이유 · 메모</label><input id="rReason" value="${esc(r.reason||'')}">
+   <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-act="saveReq">내기</button></div>`);
+}
+function surveyForm(){
+  const d=new Date();d.setDate(d.getDate()+5);
+  modal(`<h3>수요조사 열기</h3>
+   <label class="f">제목</label><input id="sTitle" value="${new Date().getMonth()+1}월 간식 · 소모품 수요조사">
+   <div class="two"><div><label class="f">대상</label><select id="sSite"><option value="all">전체</option>${Object.entries(SITES).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div><div><label class="f">마감일</label><input type="date" id="sDue" value="${ymd(d)}"></div></div>
+   <label class="f">안내 (선택)</label><input id="sNote" placeholder="예: 필요한 간식을 자유롭게 적어 주세요">
+   <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-act="saveSurvey">열기</button></div>`);
+}
+function finalScreen(){const os=by('final');if(!os.length){toast('결재할 주문서가 없어요');closeModal();return}
+  modal(`<h3>👨‍⚕️ 원장님 최종 결재</h3><p class="muted">${esc(orgName())} · ${os.length}건 · 합계 <b>${won(sumP(os))}</b></p>
+  ${os.map(o=>`<div class="ord"><div class="h"><span class="site s-${o.site}">${SITES[o.site]}</span>${esc(o.vendor||'')}${appCard(o)?'<span class="bd w">원장님 앱카드</span>':''}</div>
+   <div class="row" style="justify-content:space-between"><div class="n">${esc(o.name)}${o.spec?` <span class="muted">${esc(o.spec)}</span>`:''} · ${esc(o.qty||'')}</div><span class="money">${won(o.price)}</span></div>
+   <div class="muted" style="font-size:12.5px">${signLine(o)}${o.note?' · '+esc(o.note):''}</div>
+   <input id="fn-${o.id}" placeholder="반려 사유 (반려할 때)" style="margin-top:6px;font-size:14px;padding:6px 8px">
+   <div class="row" style="margin-top:6px"><button class="btn sm grow" data-finalok="${o.id}">✓ 결재</button><button class="btn sm danger grow" data-reject="${o.id}">반려</button></div></div>`).join('')}
+  <div class="row" style="margin-top:12px"><button class="btn ghost grow" data-act="closeModal">닫기</button>${os.length>1?'<button class="btn grow" data-act="finalAll">모두 결재</button>':''}</div>`)}
+function histView(o){
+  const N={create:'작성',review:'중간관리자 검수 통과',final:'원장님 결재',pay:'결제',arrived:'도착 확인',done:'수령 검수 완료',issue:'문제 기록',reject:'반려',resubmit:'다시 올림',edit:'수정'};
+  modal(`<h3>결재 기록 — ${esc(o.name)}</h3>${(o.log||[]).map(l=>`<div class="task"><div class="grow"><div class="t">${N[l.st]||l.st}</div><div class="d">${esc(l.name)} · ${esc((l.at||'').slice(0,16).replace('T',' '))}${l.note?' · '+esc(l.note):''}</div></div></div>`).join('')||'<div class="empty">기록이 없어요</div>'}
+  <button class="btn ghost" style="width:100%;margin-top:10px" data-act="closeModal">닫기</button>`)}
+
+/* ----- 결제 방지 키 ----- */
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+let unlockedUntil=0,afterUnlock=null;
+function lockState(){let f;try{f=JSON.parse(localStorage.getItem('mp-pk-fail'))||{n:0,t:0}}catch(e){f={n:0,t:0}}return f}
+function needKey(fn){
+  if(Date.now()<unlockedUntil){fn();return}
+  const f=lockState();if(f.n>=5&&Date.now()-f.t<600000){toast(`키를 5번 틀려 잠겼어요 — ${Math.ceil((600000-(Date.now()-f.t))/60000)}분 뒤 다시`);return}
+  afterUnlock=fn;
+  modal(`<h3>🔒 결제 방지 키</h3><p class="muted">원장님께 받은 결제 방지 키를 넣어 주세요. 5분 동안 결제할 수 있어요.</p><input type="password" inputmode="numeric" id="pkIn" maxlength="8" style="margin-top:8px;font-size:20px;letter-spacing:6px;text-align:center"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-act="pkCheck">확인</button></div>`);
+  setTimeout(()=>$('#pkIn')&&$('#pkIn').focus(),50);
+}
+async function pkCheck(){
+  const v=$('#pkIn').value;let K;try{K=await ST.getPayKey(ORG)}catch(e){toast('키를 확인하지 못했어요 — 연결을 확인하세요');return}
+  if(!K){toast('원장님이 아직 결제 방지 키를 정하지 않았어요');return}
+  if(await sha(K.salt+v)===K.hash){localStorage.removeItem('mp-pk-fail');unlockedUntil=Date.now()+300000;$('#modal').innerHTML='';const f=afterUnlock;afterUnlock=null;f&&f()}
+  else{const f=lockState();if(Date.now()-f.t>600000)f.n=0;f.n++;f.t=Date.now();localStorage.setItem('mp-pk-fail',JSON.stringify(f));$('#pkIn').value='';toast(f.n>=5?'5번 틀려 10분간 잠겨요':`키가 맞지 않아요 (${f.n}/5)`)}
+}
+let payPending=null,payQueue=[];
+function payForm(o){if(!o)return;modal(`<h3>💳 결제 완료 기록</h3><p><b>${esc(o.name)}</b> ${esc(o.qty||'')} <span class="site s-${o.site}">${SITES[o.site]}</span></p><p class="muted" style="font-size:12.5px">결재 금액 ${won(o.price)} · 결제 화면에서 본 내용을 적어 주세요.</p>
+  <div class="two"><div><label class="f">실제 결제 금액</label><input type="number" inputmode="numeric" id="pPrice" value="${o.price??''}"></div><div><label class="f">배송 예정일</label><input type="date" id="pEta" value="${o.eta||''}"></div></div>
+  <label class="f">주문번호 (선택)</label><input id="pNo" value="${esc(o.orderNo||'')}">
+  <label class="f">상품 링크 (다음 구매 때 바로 열려요 · 선택)</label><input id="pUrl" value="${esc(o.url||'')}" placeholder="쿠팡 앱 ‘공유 → 링크 복사’ 후 붙여넣기">
+  <div id="pWarn"></div>
+  <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">아직 안 했어요</button><button class="btn" data-savepaid="${o.id}">결제 완료</button></div>`);
+  $('#pPrice').addEventListener('input',()=>{const p=+$('#pPrice').value||0;$('#pWarn').innerHTML=p>(+o.price||0)*1.1+1000?'<div class="alert e" style="margin-top:8px">결재 금액보다 10% 넘게 많아요 — 원장님께 다시 결재받는 게 좋아요</div>':''})}
+function onReturn(){if(!payPending)return;const o=S.orders.find(x=>x.id===payPending);payPending=null;if(!o||o.stage!=='pay')return;
+  view='order';render();payForm(o);
+  if(payQueue.length){const next=payQueue.shift();const b=document.createElement('button');b.className='btn ghost';b.style.cssText='width:100%;margin-top:8px';b.textContent='저장하고 다음 주문 쿠팡에서 열기';b.onclick=()=>{const sv=document.querySelector('[data-savepaid]');if(sv)sv.click();payPending=next;openShop(shopUrl(S.orders.find(x=>x.id===next)))};const sh=document.querySelector('.sheet');if(sh)sh.appendChild(b)}}
+
+function editItemsForm(){
+  modal(`<h3>품목 · 정기 업무 고치기</h3>
+   <p class="muted">한 줄에 하나씩. 형식: <b>구분 | 분류 | 품목 | 주기 | 구매 기준 | 재고점검</b><br>구분 = 외래 병원 · 센터 · 브레인, 주기 = 월 1회 · 주 1회 · 주 2회 · 필요 시 · 요청 시, 재고점검 = O 또는 빈칸</p>
+   <textarea id="eItems" style="min-height:260px;font-size:13px">${esc(ITEMS().map(i=>[SITES[i.site],i.cat,i.name,CYCLES[i.cycle],i.rule,i.stock?'O':''].join(' | ')).join('\n'))}</textarea>
+   <h3 style="margin-top:12px">정기 업무</h3><p class="muted">형식: <b>주기 | 업무 내용</b></p>
+   <textarea id="eRoutine" style="min-height:160px;font-size:13px">${esc(ROUTINE().map(r=>CYCLES[r.cycle]+' | '+r.text).join('\n'))}</textarea>
+   <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn danger" data-act="resetItems">인수인계서 기본값</button><span class="grow"></span><button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-act="saveItems">저장</button></div>`);
+}
+const SITE_BY_NAME=Object.fromEntries(Object.entries(SITES).map(([k,v])=>[v,k]));
+const CYC_BY_NAME=Object.fromEntries(Object.entries(CYCLES).map(([k,v])=>[v,k]));
+
+/* ===================== 휴대폰 알림 (역할별) ===================== */
+function at(dateStr,hm){const [h,m]=(hm||'09:00').split(':').map(Number);const d=new Date(dateStr+'T00:00');d.setHours(h||0,m||0,0,0);return d.getTime()}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function buildReminders(){
+  const N=L.noti,out=[],now=Date.now();if(!N.on||!S.me)return out;
+  const push=(id,t,title,body)=>{if(t>now+30000)out.push({id,at:t,title,body})};
+  S.surveys.filter(s=>s.open&&s.due).forEach(s=>{if(!S.requests.some(r=>r.surveyId===s.id&&r.by===AUTH.uid))push('sv-'+s.id,at(ymd(addDays(new Date(s.due+'T00:00'),-1)),N.time),`📝 내일 마감: ${s.title}`,'필요한 물품이 있으면 수요를 내 주세요')});
+  if(!isMgr())return out.sort((a,b)=>a.at-b.at);
+  const rt=c=>ROUTINE().filter(r=>r.cycle===c);
+  const doneAll=(c,d)=>rt(c).every(r=>{const x=CHECKS()[r.id+'|'+periodKey(c,d)];return x&&(x.n||1)>=need(c)});
+  if(N.cyc&&(has('buyer')||has('mid')))for(let i=0;i<60;i++){const d=addDays(new Date(),i),ds=ymd(d),dow=d.getDay();
+    const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    if(rt('M1').length&&d.getDate()===Math.min(+N.monthDay||1,last)&&!doneAll('M1',d))push('m-'+ds,at(ds,N.time),`📅 ${d.getMonth()+1}월 간식 수요조사 · 구매`,rt('M1').map(r=>r.text).join(' / '));
+    if(rt('W1').length&&dow===+N.weekDay&&!doneAll('W1',d))push('w-'+ds,at(ds,N.time),'📋 이번 주 재고 확인',rt('W1').map(r=>r.text).join(' / '));
+    if(rt('W2').length&&(N.w2Days||[]).map(Number).includes(dow)){const k=CHECKS()[rt('W2')[0].id+'|'+periodKey('W2',d)];const cnt=k?(k.n||1):0;const idx=(N.w2Days||[]).map(Number).sort().indexOf(dow);if(cnt<=idx)push('r-'+ds,at(ds,N.time),'🍱 레토르트 주문 · 도착 확인',rt('W2').map(r=>r.text).join(' / '))}
+  }
+  if(N.order)S.orders.forEach(o=>{
+    if(o.stage==='ship'&&o.eta&&(has('buyer')||has('mid'))){push('e-'+o.id,at(o.eta,N.time),has('mid')?'📦 오늘 도착 예정 — 수령 검수':'📦 오늘 도착 예정',`${SITES[o.site]} · ${o.name} ${o.qty||''}`);push('e2-'+o.id,at(ymd(addDays(new Date(o.eta+'T00:00'),1)),N.time),'⚠️ 수령 검수가 안 됐어요',`${SITES[o.site]} · ${o.name} — 미도착 · 누락 확인`)}
+    if(o.meal&&has('buyer')&&!['done','reject'].includes(o.stage))push('meal-'+o.id,at(ymd(addDays(new Date(o.meal+'T00:00'),-1)),'15:00'),'🍱 내일 식사용 레토르트 도착했나요?',`${SITES[o.site]} · ${o.name} — 식사일 ${md(o.meal)}`);
+  });
+  if(N.approve){let k=0;for(let i=0;i<10&&k<3;i++){const d=addDays(new Date(),i),dow=d.getDay();if(dow===0||dow===6)continue;const ds=ymd(d);
+      if(has('mid')){const n=S.requests.filter(r=>r.status==='submitted').length+by('review').length+by('arrived').length;if(n)push('mid-'+ds,at(ds,N.time),`🔎 검수할 것 ${n}건`,'수요 · 주문서 · 수령 검수를 확인해 주세요')}
+      if(has('final')&&by('final').length)push('fin-'+ds,at(ds,N.lunch),`👨‍⚕️ 결재 대기 ${by('final').length}건`,`합계 ${won(sumP(by('final')))} — 점심 회의 때 결재해 주세요`);
+      if(has('buyer')){const p=by('pay').length,a=S.requests.filter(r=>r.status==='accepted').length;if(p)push('pay-'+ds,at(ds,N.time),`💳 결제할 주문 ${p}건`,'원장님 결재가 끝났어요 — 결제 방지 키로 결제하세요');if(a)push('acc-'+ds,at(ds,N.time),`🧾 주문서 쓸 수요 ${a}건`,'검수 통과한 수요를 주문서로 만들어 주세요')}
+      k++}}
+  return out.sort((a,b)=>a.at-b.at).slice(0,60);
+}
+let _syncT;function syncReminders(){clearTimeout(_syncT);_syncT=setTimeout(()=>{try{if(window.AdminAndroid&&AdminAndroid.setReminders)AdminAndroid.setReminders(JSON.stringify(buildReminders()))}catch(e){}},400)}
+
+/* ===================== 문서 ===================== */
+const DOC_CSS=`@page{size:A4;margin:15mm}*{box-sizing:border-box}body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:#22302C;font-size:10.5pt;line-height:1.55;margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:3px solid #2F5D50;padding-bottom:6px;margin-bottom:12px}.top h1{font-size:15pt;margin:0;color:#2F5D50;flex:1}.top .meta{font-size:8.5pt;color:#666;text-align:right;max-width:42%}
+h2{font-size:12pt;color:#2F5D50;margin:14px 0 6px;border-left:4px solid #2F5D50;padding-left:7px}table{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:9.5pt}th,td{border:1px solid #D3D9D2;padding:4px 6px;text-align:left;vertical-align:top}th{background:#EAF1EE}td.n{text-align:right}td.c,th.c{text-align:center}tr{page-break-inside:avoid}ul,ol{margin:4px 0 8px 18px;padding:0}.foot{margin-top:16px;border-top:1px solid #D3D9D2;padding-top:6px;font-size:8.5pt;color:#777}
+.sign{float:right;border-collapse:collapse;margin:0 0 8px 8px;width:auto}.sign td,.sign th{width:70px;text-align:center;font-size:9pt}.sign td{height:44px;vertical-align:middle}`;
+function docShell(title,sub,body,sign){const d=new Date();return `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${DOC_CSS}</style></head><body><div class="top"><h1>${esc(title)}</h1><div class="meta"><b>${esc(orgName())}</b><br>${esc(sub)}<br>작성 ${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. · ${esc(myName())}</div></div>${sign||''}${body}<div class="foot">${esc(orgName())} · 외래 병원 · 센터 · 브레인 물품 구매 관리 · 사업자등록번호 ${esc(SET().bizNo)}</div></body></html>`}
+const signBox=()=>`<table class="sign"><tr><th>구매 담당</th><th>중간관리자</th><th>원장</th></tr><tr><td></td><td></td><td></td></tr></table>`;
+function monthDoc(){
+  const os=S.orders.filter(o=>(o.date||'').startsWith(repMonth)&&o.stage!=='reject').sort((a,b)=>a.date.localeCompare(b.date));
+  const paid=os.filter(o=>['ship','arrived','done','issue'].includes(o.stage)),tot=sumP(paid);
+  const site=k=>sumP(paid.filter(o=>o.site===k));
+  return docShell(`${repMonth.replace('-','년 ')}월 물품 구매 내역`,'외래 병원 · 센터 · 브레인',`
+   <table style="width:auto;min-width:60%"><tr>${Object.values(SITES).map(l=>`<th class="c">${l}</th>`).join('')}<th class="c">결제 합계</th></tr><tr>${Object.keys(SITES).map(k=>`<td class="c">${won(site(k))}</td>`).join('')}<td class="c"><b>${won(tot)}</b></td></tr></table>
+   <h2 style="clear:both">물품 구매 관리 기록표 (${os.length}건)</h2>
+   <table><tr><th>주문일</th><th>구분</th><th>구매 품목</th><th>수량</th><th class="n">금액</th><th>구매처</th><th>결재 라인</th><th class="c">상태</th></tr>
+   ${os.map(o=>`<tr><td>${md(o.date)}</td><td>${SITES[o.site]}</td><td>${esc(o.name)}${o.spec?` (${esc(o.spec)})`:''}${appCard(o)?'<br><small>원장님 앱카드</small>':''}</td><td>${esc(o.qty||'')}</td><td class="n">${won(o.price)}</td><td>${esc(o.vendor||'')}</td><td style="font-size:8.5pt">${signLine(o)}</td><td class="c">${STAGE[o.stage][0]}${o.issue?'<br>'+esc(o.issue):''}</td></tr>`).join('')}</table>
+   ${os.some(o=>!['done'].includes(o.stage))?`<h2>미완료 · 추가 확인 필요</h2><ul>${os.filter(o=>o.stage!=='done').map(o=>`<li>${esc(o.name)} — ${STAGE[o.stage][0]}${o.issue?': '+esc(o.issue):''}</li>`).join('')}</ul>`:''}`,signBox());
+}
+function handoverDoc(){
+  const st=SET(),mem=r=>S.members.filter(m=>(m.roles||[]).includes(r)&&m.active!==false).map(m=>m.name).join(', ')||'(지정 필요)';
+  return docShell('물품 구매 업무 인수인계서 및 체크리스트','외래 병원 · 센터 · 브레인 | 구매 기준 · 결재 라인 · 물품 점검 · 주문 및 수령 관리',`
+   <h2>1. 결재 라인 · 결제</h2><table>
+    <tr><th style="width:22%">결재 라인</th><td>① 직원 수요 제출 → ② 중간관리자 검수(수량 · 필요성) → ③ 최종관리자(원장님) 결재 → ④ 구매 담당 결제(결제 방지 키 입력) → ⑤ 중간관리자 수령 검수</td></tr>
+    <tr><th>담당</th><td>중간관리자: ${esc(mem('mid'))}<br>최종관리자: ${esc(mem('final'))}<br>구매 담당: ${esc(mem('buyer'))}</td></tr>
+    <tr><th>사업자등록번호</th><td>${esc(st.bizNo)} (센터) — 쿠팡 · 네이버 사업자 결제</td></tr>
+    <tr><th>원장님 앱카드</th><td>단일 품목 ${won(st.approveItem)} 이상, 한 번 결제 ${won(st.approveOrder)} 이상(간식 대량 등)은 원장님 앱카드로 결제</td></tr>
+    <tr><th>결제 방지 키</th><td>원장님이 정한 키를 넣어야 결제 화면이 열림. 5회 틀리면 10분 잠김. 키는 구매 담당에게만 전달</td></tr>
+    <tr><th>배송지</th><td>${Object.entries(SITES).map(([k,l])=>`${l}: ${esc(st.addr[k]||'(확인 필요)')}`).join('<br>')}<br><small>각각의 배송 주소 확인 후 결제</small></td></tr></table>
+   ${Object.entries(SITES).map(([k,l],i)=>`<h2>${i+2}. ${l} 물품 구매 체크리스트</h2><table><tr><th class="c" style="width:6%">확인</th><th style="width:18%">분류</th><th style="width:24%">구매 품목</th><th style="width:11%">확인 주기</th><th>구매 기준 및 특이사항</th></tr>${ITEMS().filter(it=>it.site===k).map(it=>`<tr><td class="c">☐</td><td>${esc(it.cat)}</td><td>${esc(it.name)}</td><td>${CYCLES[it.cycle]}</td><td>${esc(it.rule)}</td></tr>`).join('')}</table>`).join('')}
+   <h2>5. 정기 업무 체크리스트</h2><table><tr><th style="width:14%">확인 시점</th><th class="c" style="width:7%">체크</th><th>업무 내용</th></tr>${ROUTINE().map(r=>`<tr><td>${CYCLES[r.cycle]}</td><td class="c">☐</td><td>${esc(r.text)}</td></tr>`).join('')}</table>
+   <p style="font-size:9pt;color:#666">※ 종이컵 10oz 및 종이용기 1,000cc는 실제 구매 규격 확인이 필요하다.</p>`);
+}
+function exportDoc(html,name){
+  if(window.AdminAndroid&&AdminAndroid.printHtml){AdminAndroid.printHtml(name,html);return}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=name+'.html';document.body.appendChild(a);a.click();a.remove();toast('문서 파일을 저장했어요')}catch(e){toast('문서를 만들지 못했어요')}
+}
+async function copy(t,msg){try{if(window.AdminAndroid&&AdminAndroid.copyText(t)){toast(msg);return}await navigator.clipboard.writeText(t);toast(msg)}catch(e){toast(t)}}
+function share(t){if(window.AdminAndroid&&AdminAndroid.shareText){AdminAndroid.shareText(t);return}copy(t,'메시지를 복사했어요')}
+
+/* ===================== 동작 ===================== */
+function toggleCheck(id,cycle){
+  const C=CHECKS(),k=id+'|'+periodKey(cycle),c=C[k],nd=need(cycle);
+  if(!c)C[k]={n:1,at:new Date().toISOString(),name:myName()};
+  else if((c.n||1)<nd)C[k]={n:(c.n||1)+1,at:new Date().toISOString(),name:myName()};
+  else delete C[k];
+}
+function addReq(site,name,qty='',reason='',surveyId=''){S.requests.push({id:uid(),at:new Date().toISOString(),by:AUTH.uid,byName:myName(),site,name,qty,reason,surveyId,status:'submitted'})}
+function finishReqs(o,st){(o.reqIds||[]).forEach(i=>{const r=S.requests.find(x=>x.id===i);if(r)r.status=st})}
+const errMsg=e=>{const c=(e&&e.code)||'';return ({'auth/invalid-credential':'이메일 또는 비밀번호가 맞지 않아요','auth/wrong-password':'비밀번호가 맞지 않아요','auth/user-not-found':'가입되지 않은 이메일이에요','auth/email-already-in-use':'이미 가입된 이메일이에요 — 로그인해 주세요','auth/weak-password':'비밀번호는 6자 이상이어야 해요','auth/invalid-email':'이메일 형식이 맞지 않아요','auth/too-many-requests':'시도가 너무 많아요 — 잠시 뒤 다시 해 주세요','auth/network-request-failed':'인터넷 연결을 확인해 주세요','permission-denied':'권한이 없어요'}[c]||((e&&e.message)||'문제가 생겼어요'))+(c?` (${c})`:'')};
+
+document.addEventListener('click',async e=>{
+  const bg=e.target.closest('[data-bg]');if(bg&&e.target===bg){closeModal();return}
+  const t=e.target.closest('button');if(!t)return;const d=t.dataset;const y=scrollY;
+  const re=()=>{save();render();scrollTo(0,y)};
+  const ord=id=>S.orders.find(x=>x.id===id);
+  if(d.am){authMode=d.am;authMsg='';render();return}
+  if(d.v){view=d.v;render();scrollTo(0,0);return}
+  if(d.go){view=d.go;if(d.of)orderF=d.of;render();scrollTo(0,0);return}
+  if(d.of){orderF=d.of;render();return}
+  if(d.site){siteF=d.site;render();return}
+  if(d.rt){const r=ROUTINE().find(x=>x.id===d.rt);toggleCheck(r.id,r.cycle);re();return}
+  if(d.it){const i=ITEMS().find(x=>x.id===d.it);toggleCheck(i.id,i.cycle);re();return}
+  if(d.stock){STOCK()[d.stock]={state:d.s,at:new Date().toISOString(),name:myName()};const i=ITEMS().find(x=>x.id===d.stock);if(isRegular(i.cycle)&&!doneCount(i.id,i.cycle))toggleCheck(i.id,i.cycle);if(d.s!=='ok')toast(`${i.name} ${d.s==='out'?'없음':'부족'} — ‘수요로 올리기’를 누르면 검수로 넘어가요`);re();return}
+  if(d.buy){const i=ITEMS().find(x=>x.id===d.buy);if(S.requests.some(r=>['submitted','accepted'].includes(r.status)&&r.name===i.name&&r.site===i.site)){toast('이미 수요로 올라가 있어요');return}addReq(i.site,i.name,/제과제빵/.test(i.cat)?'김수용 씨에게 수량 확인':'','재고 점검');toast('수요로 올렸어요 — 중간관리자 검수로 넘어가요');re();return}
+  if(d.orderItem){const i=ITEMS().find(x=>x.id===d.orderItem);orderForm({site:i.site,name:i.name});return}
+  if(d.newreqSv!==undefined){reqForm({surveyId:d.newreqSv});return}
+  if(d.delreq){S.requests=S.requests.filter(x=>x.id!==d.delreq);re();toast('취소했어요');return}
+  if(d.svclose){S.surveys.find(s=>s.id===d.svclose).open=false;re();toast('수요조사를 마감했어요');return}
+  if(d.svopen){S.surveys.find(s=>s.id===d.svopen).open=true;re();return}
+  if(d.svshare){const s=S.surveys.find(x=>x.id===d.svshare);share(`[${orgName()}] 📝 ${s.title}\n${s.due?md(s.due)+'까지 ':''}필요한 물품을 ‘물품 구매 관리’ 앱 → 수요 탭에서 내 주세요.${s.note?'\n'+s.note:''}${has('admin')?`\n처음이면 가입 후 참여 코드 ${O().joinCode} 를 넣어 주세요.`:''}`);return}
+  // 중간관리자: 수요 검수
+  if(d.reqok||d.reqno){const id=d.reqok||d.reqno,r=S.requests.find(x=>x.id===id);const q=($('#rq-'+id)||{}).value,n=($('#rn-'+id)||{}).value||'';
+    if(d.reqno&&!n.trim()){toast('반려 사유를 적어 주세요');$('#rn-'+id).focus();return}
+    if(q!=null)r.qty=q.trim();r.status=d.reqok?'accepted':'rejected';Object.assign(r,{midBy:AUTH.uid,midName:myName(),midAt:new Date().toISOString(),midNote:n.trim()});re();toast(d.reqok?'검수 통과 — 구매 담당에게 넘어가요':'반려했어요');return}
+  // 구매 담당: 검수 통과 수요 → 주문서
+  if(d.mkorder){const [site,name]=d.mkorder.split('|');const rs=S.requests.filter(r=>r.status==='accepted'&&r.site===site&&r.name===name);
+    orderForm({site,name,qty:rs.map(r=>r.qty).filter(Boolean).join(' + '),note:rs.map(r=>r.byName).join(', ')+' 수요',reqIds:rs.map(r=>r.id)},'수요 → 주문서');return}
+  // 주문서 단계
+  if(d.midok){const o=ord(d.midok);o.stage='final';logStage(o,'review');re();toast('검수 통과 — 원장님 결재로 올라가요');return}
+  if(d.reject){const o=ord(d.reject);const box=$('#fn-'+o.id);let note=box?box.value.trim():'';
+    if(!note){modal(`<h3>반려 — ${esc(o.name)}</h3><label class="f">반려 사유</label><input id="rjIn" placeholder="예: 수량 줄여서 다시"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">취소</button><button class="btn danger" data-rejectgo="${o.id}">반려</button></div>`);setTimeout(()=>$('#rjIn').focus(),50);return}
+    o.stage='reject';logStage(o,'reject',note);save();toast('반려했어요');if(by('final').length&&has('final')&&$('#fn-'+o.id))finalScreen();else closeModal();return}
+  if(d.rejectgo){const o=ord(d.rejectgo),n=$('#rjIn').value.trim();if(!n){toast('반려 사유를 적어 주세요');return}o.stage='reject';logStage(o,'reject',n);save();closeModal();toast('반려했어요');return}
+  if(d.finalok){const o=ord(d.finalok);o.stage='pay';logStage(o,'final');save();toast('결재했어요');if($('#modal').innerHTML&&by('final').length)finalScreen();else closeModal();return}
+  if(d.resubmit){const o=ord(d.resubmit);orderForm(o,'고쳐서 다시 올리기');window._resubmit=true;return}
+  if(d.shop){const o=ord(d.shop);needKey(()=>{payPending=o.id;copy(SET().bizNo,`사업자번호 복사됨 — ${o.vendor||'쿠팡'} 사업자 계정으로 결제하세요`);setTimeout(()=>openShop(shopUrl(o)),400)});return}
+  if(d.paid){const o=ord(d.paid);needKey(()=>payForm(o));return}
+  if(d.savepaid){if(Date.now()>unlockedUntil){toast('결제 방지 키 시간이 지났어요 — 다시 넣어 주세요');closeModal();return}
+    const o=ord(d.savepaid);const pr=$('#pPrice').value;if(pr!==''&&!isNaN(+pr)&&+pr!==+o.price){o.paidPrice=+pr;o.price=+pr}o.orderNo=$('#pNo').value.trim();if($('#pEta').value)o.eta=$('#pEta').value;const u=$('#pUrl').value.trim();if(u)o.url=u;
+    o.stage='ship';logStage(o,'pay',o.orderNo?'주문번호 '+o.orderNo:'');finishReqs(o,'ordered');save();$('#modal').innerHTML='';render();toast('결제 완료 — 도착하면 중간관리자가 수령 검수해요');return}
+  if(d.arrived){const o=ord(d.arrived);o.stage='arrived';logStage(o,'arrived');re();toast('도착 — 중간관리자 수령 검수를 기다려요');return}
+  if(d.inspok){const o=ord(d.inspok);o.stage='done';logStage(o,'done',o.issue?'문제 해결':'');finishReqs(o,'done');re();toast('수령 검수 완료');return}
+  if(d.issue){const o=ord(d.issue);modal(`<h3>${esc(o.name)} — 누락 · 파손 · 오배송</h3><label class="f">무슨 문제인가요?</label><input id="iTxt" value="${esc(o.issue||'')}" placeholder="예: 2박스 중 1박스 누락"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-saveissue="${o.id}">저장</button></div>`);return}
+  if(d.saveissue){const o=ord(d.saveissue);o.issue=$('#iTxt').value.trim();o.stage='issue';logStage(o,'issue',o.issue);save();closeModal();return}
+  if(d.reorder){const o=ord(d.reorder);o.reordered=true;save();orderForm({site:o.site,name:o.name,spec:o.spec,qty:o.qty,vendor:o.vendor,url:o.url,note:'재주문 · 교환 ('+(o.issue||'')+')'},'재주문서');return}
+  if(d.hist){histView(ord(d.hist));return}
+  if(d.edit){orderForm(ord(d.edit),'주문서 고치기');window._resubmit=false;return}
+  if(d.delorder){S.orders=S.orders.filter(x=>x.id!==d.delorder);save();closeModal();toast('삭제했어요');return}
+  if(d.saveorder!==undefined){
+    const name=$('#fName').value.trim(),price=$('#fPrice').value;
+    if(!name){toast('구매 품목을 적어 주세요');return}
+    if(price===''||isNaN(+price)){toast('금액을 숫자로 적어 주세요 (결재에 필요해요)');return}
+    const body={date:$('#fDate').value||today(),site:$('#fSite').value,name,spec:$('#fSpec').value.trim(),qty:$('#fQty').value.trim(),price:+price,vendor:$('#fVendor').value,eta:$('#fEta').value,meal:$('#fMeal').value,payGroup:$('#fGroup').value.trim(),note:$('#fNote').value.trim(),url:$('#fUrl').value.trim()};
+    if(d.saveorder){const o=ord(d.saveorder);const changed=['name','price','qty','spec'].some(k=>String(o[k]??'')!==String(body[k]??''));Object.assign(o,body);
+      if(o.stage==='reject'&&window._resubmit){o.stage=(o.reqIds&&o.reqIds.length&&!(o.log||[]).some(l=>l.st==='review'))?'final':'review';logStage(o,'resubmit')}
+      else if(o.stage==='final'&&changed&&lastLog(o,'review')&&!has('mid')){o.stage='review';logStage(o,'edit','결재 전 수정 → 다시 검수');toast('내용이 바뀌어 중간관리자 검수부터 다시 받아요')}
+      else logStage(o,'edit');}
+    else{const dr=window._draft||{};const o={id:uid(),...body,reqIds:dr.reqIds||[],stage:(dr.reqIds&&dr.reqIds.length)?'final':'review',log:[]};logStage(o,'create');
+      if(o.reqIds.length)o.reqIds.forEach(i=>{const r=S.requests.find(x=>x.id===i);if(r){r.status='ordered';r.orderId=o.id}});
+      S.orders.push(o);toast(o.stage==='final'?'저장 — 원장님 결재로 올라갔어요':'저장 — 중간관리자 검수로 올라갔어요')}
+    window._resubmit=false;save();closeModal();return}
+  if(d.copyaddr){const a=SET().addr[d.copyaddr];if(!a){toast('주소가 아직 없어요');return}copy(a,'주소를 복사했어요');return}
+  if(d.w2!==undefined){const N=L.noti,i=+d.w2;let a=(N.w2Days||[]).map(Number);a=a.includes(i)?a.filter(x=>x!==i):[...a,i].slice(-2);N.w2Days=a.sort();saveL();render();scrollTo(0,y);return}
+  if(d.mrole){const m=S.members.find(x=>x.id===d.mrole);let r=m.roles||[];r=r.includes(d.r)?r.filter(x=>x!==d.r):[...r,d.r];if(m.id===AUTH.uid&&d.r==='admin'&&!r.includes('admin')&&O().owner!==AUTH.uid){toast('내 관리자 역할은 직접 뺄 수 없어요');return}
+    if(!r.length)r=['staff'];const {id,...md2}=m;try{await ST.put(ORG,'members',id,{...md2,roles:r})}catch(err){toast(errMsg(err))}return}
+  if(d.mout){const m=S.members.find(x=>x.id===d.mout);const {id,...md2}=m;try{await ST.put(ORG,'members',id,{...md2,active:m.active===false})}catch(err){toast(errMsg(err))}return}
+  if(d.testrole){let r=myRoles();r=r.includes(d.testrole)?r.filter(x=>x!==d.testrole):[...r,d.testrole];ST.setMyRoles(r.length?r:['staff']);return}
+  switch(d.act){
+    case 'closeModal':closeModal();break;
+    case 'copyBiz':copy(SET().bizNo,'사업자등록번호를 복사했어요');break;
+    case 'newOrder':window._resubmit=false;orderForm();break;
+    case 'newReq':reqForm();break;
+    case 'newSurvey':surveyForm();break;
+    case 'saveSurvey':{const ti=$('#sTitle').value.trim();if(!ti){toast('제목을 적어 주세요');return}S.surveys.push({id:uid(),title:ti,site:$('#sSite').value,due:$('#sDue').value,note:$('#sNote').value.trim(),open:true,at:new Date().toISOString(),by:AUTH.uid,byName:myName()});save();closeModal();toast('수요조사를 열었어요 — ‘직원에게 알리기’로 알려 주세요');break}
+    case 'saveReq':{const nm=$('#rName').value.trim();if(!nm){toast('품목을 적어 주세요');return}const sv=$('#rSv')?$('#rSv').value:'';S.requests.push({id:uid(),at:new Date().toISOString(),by:AUTH.uid,byName:myName(),site:$('#fSite').value,name:nm,qty:$('#rQty').value.trim(),due:$('#rDue').value,reason:$('#rReason').value.trim(),surveyId:sv,status:'submitted'});save();closeModal();toast('수요를 냈어요 — 중간관리자가 검수해요');break}
+    case 'lowToReq':{let n=0;ITEMS().forEach(i=>{const s=STOCK()[i.id];if(s&&s.state!=='ok'&&!S.requests.some(r=>['submitted','accepted'].includes(r.status)&&r.name===i.name&&r.site===i.site)){addReq(i.site,i.name,'',s.state==='out'?'재고 없음':'재고 부족');n++}});save();render();toast(n?`${n}개를 수요로 올렸어요`:'이미 모두 올라가 있어요');break}
+    case 'finalView':finalScreen();break;
+    case 'finalAll':by('final').forEach(o=>{o.stage='pay';logStage(o,'final')});save();closeModal();toast('모두 결재했어요');break;
+    case 'pkCheck':pkCheck();break;
+    case 'openCart':openShop('https://cart.coupang.com/cartView.pang');break;
+    case 'payAllCoupang':needKey(()=>{const ok=by('pay').filter(o=>(o.vendor||'쿠팡')==='쿠팡');if(!ok.length){toast('결제할 쿠팡 주문이 없어요');return}payQueue=ok.map(o=>o.id);payPending=payQueue.shift();copy(SET().bizNo,`사업자번호 복사됨 · ${ok.length}건 중 1번째를 열어요`);setTimeout(()=>openShop(shopUrl(ord(payPending))),400)});break;
+    case 'setPayKey':{const a=$('#pk1').value,b=$('#pk2').value;if(!/^\d{4,8}$/.test(a)){toast('숫자 4~8자리로 정해 주세요');return}if(a!==b){toast('두 번 넣은 키가 달라요');return}
+      const salt=uid()+uid();try{await ST.setPayKey(ORG,{salt,hash:await sha(salt+a)});$('#pk1').value=$('#pk2').value='';$('#pkState').textContent='✅ 저장했어요';toast('결제 방지 키를 저장했어요 — 구매 담당에게만 알려 주세요')}catch(err){toast(errMsg(err))}break}
+    case 'shareCode':share(`[${orgName()}] 물품 구매 관리 앱\n1) 앱 설치 후 이메일로 가입\n2) 참여 코드 ${O().joinCode} 입력\n3) 수요 탭에서 필요한 물품을 내 주세요`);break;
+    case 'newCode':try{await ST.newJoinCode(ORG,O().joinCode);toast('새 참여 코드를 만들었어요 — 예전 코드는 못 써요')}catch(err){toast(errMsg(err))}break;
+    case 'editItems':editItemsForm();break;
+    case 'saveItems':{const its=[],bad=[];$('#eItems').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{const [s,c,n,cy,r,st]=l.split('|').map(x=>(x||'').trim());const site=SITE_BY_NAME[s],cycle=CYC_BY_NAME[cy];if(!site||!n||!cycle){bad.push(i+1);return}const old=ITEMS().find(x=>x.site===site&&x.name===n);its.push({id:old?old.id:uid(),site,cat:c||'기타',name:n,cycle,rule:r||'',stock:/^o$/i.test(st||'')})});
+      const rts=[],bad2=[];$('#eRoutine').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{const [cy,...tx]=l.split('|').map(x=>x.trim());const cycle=CYC_BY_NAME[cy];if(!cycle||!tx.join('|')){bad2.push(i+1);return}const old=ROUTINE().find(x=>x.text===tx.join(' | '));rts.push({id:old?old.id:uid(),cycle,text:tx.join(' | ')})});
+      if(bad.length||bad2.length){toast(`형식이 맞지 않는 줄: ${bad.length?'품목 '+bad.join(','):''} ${bad2.length?'정기 업무 '+bad2.join(','):''}`);return}
+      S.org.items=its;S.org.routine=rts;save();closeModal();toast('저장했어요');break}
+    case 'resetItems':S.org.items=DEFAULT_ITEMS();S.org.routine=DEFAULT_ROUTINE();save();closeModal();toast('인수인계서 기본값으로 되돌렸어요');break;
+    case 'printMonth':exportDoc(monthDoc(),`물품구매내역_${repMonth}`);break;
+    case 'printHandover':exportDoc(handoverDoc(),`물품구매_인수인계서_${today().replace(/-/g,'')}`);break;
+    case 'backup':{const data=JSON.stringify({app:'maum-purchase',v:2,savedAt:new Date().toISOString(),org:S.org,members:S.members,requests:S.requests,orders:S.orders,surveys:S.surveys});const name=`물품구매관리_기록_${today().replace(/-/g,'')}.json`;
+      if(window.AdminAndroid&&AdminAndroid.saveFile){AdminAndroid.saveFile(name,'application/json',data);break}
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();break}
+    case 'notiPerm':if(window.AdminAndroid&&AdminAndroid.requestNotiPermission){AdminAndroid.requestNotiPermission();toast('알림 허용 창이 뜨면 ‘허용’을 눌러 주세요')}else toast('휴대폰 앱에서 쓸 수 있어요');break;
+    case 'notiTest':if(window.AdminAndroid&&AdminAndroid.testNotification){AdminAndroid.testNotification('물품 구매 알림 시험','알림이 이렇게 떠요 ✅');toast('곧 시험 알림이 떠요')}else toast('휴대폰 앱에서 쓸 수 있어요');break;
+    // 로그인 · 기관
+    case 'signIn':case 'signUp':{const em=$('#aEmail').value.trim(),pw=$('#aPw').value;authMsg='';
+      if(d.act==='signUp'&&pw!==$('#aPw2').value){authMsg='비밀번호 두 개가 달라요';render();return}
+      t.disabled=true;try{if(d.act==='signUp'){await ST.signUp(em,pw);await ST.verify()}else await ST.signIn(em,pw)}catch(err){authMsg=errMsg(err);render()}break}
+    case 'resetPw':{const em=$('#aEmail').value.trim();if(!em){authMsg='이메일을 먼저 적어 주세요';render();return}try{await ST.reset(em);toast('비밀번호 재설정 메일을 보냈어요')}catch(err){authMsg=errMsg(err);render()}break}
+    case 'checkVerify':try{if(await ST.refresh()){AUTH.verified=true;startOrg()}else toast('아직 인증되지 않았어요 — 메일의 링크를 눌러 주세요')}catch(err){toast(errMsg(err))}break;
+    case 'resendVerify':try{await ST.verify();toast('인증 메일을 다시 보냈어요')}catch(err){toast(errMsg(err))}break;
+    case 'logout':if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;await ST.signOut();break;
+    case 'leave':if(!confirmLeave()){break}if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};await ST.leaveOrg();view='setup';render();break;
+    case 'joinOrg':{const nm=$('#jName').value.trim(),cd=$('#jCode').value.trim();if(!nm||!cd){toast('이름과 참여 코드를 넣어 주세요');return}t.disabled=true;try{ORG=await ST.joinOrg(cd,nm);listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
+    case 'createOrg':{const on=$('#cOrg').value.trim(),nm=$('#cName').value.trim();if(!on||!nm){toast('기관 이름과 내 이름을 넣어 주세요');return}const roles=[...document.querySelectorAll('.cRole:checked')].map(x=>x.value);t.disabled=true;
+      try{ORG=await ST.createOrg({orgName:on,myName:nm,roles,seed:{settings:DEFAULT_SETTINGS,items:DEFAULT_ITEMS(),routine:DEFAULT_ROUTINE(),checks:{},stock:{}}});listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
+  }
+});
+let _leaveArm=0;function confirmLeave(){if(Date.now()-_leaveArm<4000)return true;_leaveArm=Date.now();toast('한 번 더 누르면 이 휴대폰에서 기관 연결을 끊어요');return false}
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='repMonth'){repMonth=el.value;render();return}
+  if(el.id==='rSv'){const s=S.surveys.find(x=>x.id===el.value);if(s&&s.site&&s.site!=='all')$('#fSite').value=s.site;return}
+  if(el.dataset.myname!==undefined){const v=el.value.trim();if(!v)return;const {id,...m}=S.me;ST.put(ORG,'members',id,{...m,name:v}).then(()=>toast('이름을 바꿨어요')).catch(err=>toast(errMsg(err)));return}
+  if(el.dataset.org){S.org.name=el.value.trim()||orgName();save();toast('저장했어요');return}
+  if(el.dataset.st){const k=el.dataset.st;S.org.settings={...SET(),[k]:['approveItem','approveOrder'].includes(k)?Math.max(0,+el.value||0):el.value.trim()};save();if(k==='bizNo')render();toast('저장했어요');return}
+  if(el.dataset.addr){const s=SET();s.addr[el.dataset.addr]=el.value.trim();S.org.settings=s;save();toast('저장했어요');return}
+  if(el.dataset.noti){const k=el.dataset.noti,N=L.noti;N[k]=el.type==='checkbox'?el.checked:(['monthDay','weekDay'].includes(k)?+el.value:el.value);saveL();render();toast('알림 설정을 저장했어요');return}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='pkIn')pkCheck()});
+
+/* ===================== 시작 ===================== */
+function listenOrg(){if(UNSUB)UNSUB();ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};BASE={};view='home';
+  $('#app').innerHTML='<div class="empty" style="padding-top:40vh">기관 자료를 불러오는 중…</div>';
+  UNSUB=ST.listen(ORG,onData,(err,key)=>{console.error(key,err);if(key==='me'||key==='org'){toast('기관 자료를 볼 권한이 없어요');}})}
+async function startOrg(){
+  try{const me=await ST.loadMe();if(me&&me.orgId){ORG=me.orgId;listenOrg()}else{view='setup';render()}}
+  catch(err){toast(errMsg(err));view='setup';render()}
+}
+ST.onAuth(u=>{AUTH=u;if(UNSUB){UNSUB();UNSUB=null}ORG=null;ready=false;
+  if(!u){view='auth';render();return}
+  if(!u.verified){view='auth';render();return}
+  startOrg();
+});
+window.nuBack=function(){if($('#modal').innerHTML){closeModal();return true}const T=tabs();if(ORG&&view!==T[0][0]){view=T[0][0];render();scrollTo(0,0);return true}return false};
+window.__test={S:()=>S,buildReminders,myQueue,monthDoc,handoverDoc,bizValid,sha};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(payPending)onReturn();syncReminders()}});
+</script>
+</body></html>

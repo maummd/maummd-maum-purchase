@@ -1,0 +1,108 @@
+rules_version = '2';
+// 물품 구매 관리 Firestore 보안 규칙
+// 결재 라인: 직원 수요 → 중간관리자(mid) 검수 → 최종관리자(final) 결재 → 구매 담당(buyer) 결제 → 중간관리자 수령 검수
+// - 이메일 인증을 마친 구성원만 읽고 씁니다.
+// - 주문서 단계는 정해진 역할만 넘길 수 있습니다 (예: 결재는 최종관리자만).
+// - 직원은 수요조사와 자기 수요만 봅니다. 주문서 · 금액 · 구성원은 관리자 역할만 봅니다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function orgDoc(org) { return get(/databases/$(database)/documents/orgs/$(org)).data; }
+    function memberPath(org) { return /databases/$(database)/documents/orgs/$(org)/members/$(request.auth.uid); }
+    function isMember(org) { return signedIn() && exists(memberPath(org)) && get(memberPath(org)).data.active == true; }
+    function roles(org) { return get(memberPath(org)).data.roles; }
+    function isOwner(org) { return signedIn() && orgDoc(org).owner == request.auth.uid; }
+    function hasRole(org, r) { return isMember(org) && r in roles(org); }
+    function isAdmin(org) { return isOwner(org) || hasRole(org, 'admin'); }
+    function isMgr(org) { return isOwner(org) || (isMember(org) && roles(org).hasAny(['admin', 'mid', 'final', 'buyer'])); }
+
+    // 내가 속한 기관
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 참여 코드 → 기관 (코드를 아는 사람만 조회, 목록은 못 봄)
+    match /joinCodes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && (
+        getAfter(/databases/$(database)/documents/orgs/$(request.resource.data.orgId)).data.owner == request.auth.uid
+        || isAdmin(request.resource.data.orgId));
+      allow delete: if signedIn() && isAdmin(resource.data.orgId);
+    }
+
+    match /orgs/{org} {
+      allow read: if isMember(org) || isOwner(org);
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid;
+      // 기관 설정 · 품목은 관리자, 점검 체크는 중간관리자 · 구매 담당도
+      allow update: if request.resource.data.owner == resource.data.owner && (
+        isAdmin(org)
+        || ((hasRole(org, 'mid') || hasRole(org, 'buyer'))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checks', 'stock', 'updated'])));
+
+      match /members/{m} {
+        allow read: if isMgr(org) || (signedIn() && request.auth.uid == m);
+        // 기관을 만든 사람
+        allow create: if signedIn() && request.auth.uid == m
+          && (getAfter(/databases/$(database)/documents/orgs/$(org)).data.owner == request.auth.uid
+              // 참여 코드로 들어온 사람: 직원으로만
+              || (request.resource.data.roles == ['staff'] && request.resource.data.active == true
+                  && request.resource.data.code == orgDoc(org).joinCode));
+        allow update: if isAdmin(org)
+          || (signedIn() && request.auth.uid == m && isMember(org)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
+        allow delete: if isAdmin(org);
+      }
+
+      match /surveys/{id} {
+        allow read: if isMember(org);
+        allow write: if hasRole(org, 'mid') || hasRole(org, 'buyer') || isAdmin(org);
+      }
+
+      match /requests/{id} {
+        allow read: if isMgr(org) || (isMember(org) && resource.data.by == request.auth.uid);
+        allow create: if isMember(org) && request.resource.data.by == request.auth.uid
+          && request.resource.data.status == 'submitted' && request.resource.data.name is string;
+        // 검수 통과 · 반려는 중간관리자, 주문 진행 표시는 구매 담당 · 중간관리자
+        allow update: if (hasRole(org, 'mid') || hasRole(org, 'buyer') || isAdmin(org))
+          && (request.resource.data.status == resource.data.status
+              || (resource.data.status == 'submitted' && request.resource.data.status in ['accepted', 'rejected'] && hasRole(org, 'mid'))
+              || (request.resource.data.status in ['ordered', 'done', 'accepted']
+                  && resource.data.status in ['accepted', 'ordered']));
+        allow delete: if isAdmin(org)
+          || (isMember(org) && resource.data.by == request.auth.uid && resource.data.status == 'submitted');
+      }
+
+      match /orders/{id} {
+        function from() { return resource.data.stage; }
+        function to() { return request.resource.data.stage; }
+        function mid() { return hasRole(org, 'mid'); }
+        function fin() { return hasRole(org, 'final'); }
+        function buy() { return hasRole(org, 'buyer'); }
+
+        allow read: if isMgr(org);
+        // 새 주문서: 중간관리자 검수부터 (검수 통과 수요로 만든 것만 바로 원장님 결재)
+        allow create: if (buy() || mid())
+          && (to() == 'review' || (to() == 'final' && request.resource.data.reqIds.size() > 0));
+        allow update: if
+             (from() == to() && from() in ['review', 'final', 'reject', 'pay', 'ship', 'arrived', 'issue', 'done'] && (buy() || mid())
+                && (from() in ['review', 'final', 'reject'] || request.resource.data.price == resource.data.price))
+          || (from() == 'review' && to() in ['final', 'reject'] && mid())
+          || (from() == 'review' && to() == 'review' && buy())
+          || (from() == 'final' && to() in ['pay', 'reject'] && fin())
+          || (from() == 'final' && to() == 'review' && (buy() || mid()))
+          || (from() == 'reject' && to() in ['review', 'final'] && (buy() || mid()))
+          || (from() == 'pay' && to() == 'ship' && buy())
+          || (from() == 'ship' && to() == 'arrived' && (buy() || mid()))
+          || (from() in ['ship', 'arrived', 'issue'] && to() in ['done', 'issue'] && mid());
+        allow delete: if (buy() || isAdmin(org)) && from() in ['review', 'reject'];
+      }
+
+      // 결제 방지 키: 원장님 · 관리자가 정하고, 구매 담당이 확인
+      match /secret/{k} {
+        allow read: if hasRole(org, 'buyer') || hasRole(org, 'final') || isAdmin(org);
+        allow write: if hasRole(org, 'final') || isAdmin(org);
+      }
+    }
+  }
+}

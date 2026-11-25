@@ -1,0 +1,116 @@
+name: 물품 구매 관리 앱 빌드
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 화면 만들기 (src → web/index.html → 앱)
+        working-directory: .
+        run: |
+          npm ci
+          node build.mjs
+          mkdir -p android/app/src/main/assets
+          cp -r web/. android/app/src/main/assets/
+          ls -l android/app/src/main/assets
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android 16 SDK 설치
+        run: |
+          SDKM="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin | sort -V | tail -1)/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+
+      - name: 테스트용 APK 만들기
+        run: gradle assembleDebug --no-daemon
+
+      - name: 출시용 파일(AAB · APK) 만들기
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          # 붙여 넣을 때 들어간 앞뒤 공백 · 줄바꿈 · 따옴표를 지웁니다 (비밀번호는 영문 · 숫자만 씁니다).
+          KEYSTORE_PASSWORD="$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \r\n\t"')"
+          export KEYSTORE_PASSWORD
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            # 붙여 넣을 때 들어간 줄바꿈 · 공백 · 따옴표를 지우고 해독합니다.
+            printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n\t"' | base64 -d > "$RUNNER_TEMP/upload.jks" \
+              || { echo "::error::KEYSTORE_BASE64 값이 올바르지 않습니다. github-secrets.txt의 긴 한 줄 전체를 다시 붙여 넣어 주세요."; exit 1; }
+            keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$KEYSTORE_PASSWORD" > /dev/null \
+              || { echo "::error::서명 키 파일 또는 KEYSTORE_PASSWORD가 맞지 않습니다."; exit 1; }
+            export KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
+            echo "HAS_KEY=true" >> "$GITHUB_ENV"
+            # 키 이름(alias)은 키 파일에서 직접 읽고, PKCS12 키는 저장소 비밀번호와 키 비밀번호가 같습니다.
+            KEY_ALIAS="$(keytool -list -v -keystore "$KEYSTORE_PATH" -storepass "$KEYSTORE_PASSWORD" | sed -n 's/^Alias name: //p' | head -1)"
+            export KEY_ALIAS
+            export KEY_PASSWORD="$KEYSTORE_PASSWORD"
+            echo "서명 키로 서명합니다."
+          else
+            echo "서명 키가 없어 서명하지 않은 출시 파일을 만듭니다. (Play 업로드 불가)"
+          fi
+          gradle bundleRelease assembleRelease --no-daemon
+
+      - name: 파일 이름 정리 (물품 구매 관리)
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p out/test out/release
+          cp android/app/build/outputs/apk/debug/*.apk out/test/maumpurchase-test.apk
+          cp android/app/build/outputs/bundle/release/*.aab out/release/maumpurchase-release.aab
+          cp android/app/build/outputs/apk/release/*.apk out/release/maumpurchase-release.apk
+
+      - name: 설치 파일 확인 (앱 이름 · 고유 이름)
+        working-directory: ${{ github.workspace }}
+        run: |
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          for f in out/test/maumpurchase-test.apk out/release/maumpurchase-release.apk; do
+            echo "== $f"; "$AAPT" dump badging "$f" | grep -E "^package:|^application-label:"
+          done
+          sha256sum out/release/maumpurchase-release.apk
+          ls -l out/release/ out/test/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MaumPurchase-테스트용-APK
+          path: out/test/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MaumPurchase-출시용-AAB-APK
+          path: out/release/
+
+      - name: 휴대폰용 바로 받기 링크 만들기 (서명된 경우만)
+        if: ${{ github.ref == 'refs/heads/main' && env.HAS_KEY == 'true' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest out/release/maumpurchase-release.apk \
+            --title "물품 구매 관리 최신판 (빌드 ${{ github.run_number }})" \
+            --notes "휴대폰에서 maumpurchase-release.apk 를 눌러 받아 설치하세요. 버전 1.0.${{ github.run_number }}" --latest
