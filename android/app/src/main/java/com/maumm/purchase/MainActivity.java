@@ -184,8 +184,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openUrl(String url) {
             runOnUiThread(() -> {
-                if (url == null || !(url.startsWith("https://") || url.startsWith("http://") || url.startsWith("coupang://"))) return;
-                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); }
+                if (url == null) return;
+                boolean tel = url.startsWith("tel:"), sms = url.startsWith("sms:");
+                if (!(tel || sms || url.startsWith("https://") || url.startsWith("http://") || url.startsWith("coupang://"))) return;
+                // 전화는 바로 걸지 않고 번호가 입력된 전화 화면만 엽니다.
+                try { startActivity(new Intent(tel ? Intent.ACTION_DIAL : (sms ? Intent.ACTION_SENDTO : Intent.ACTION_VIEW), Uri.parse(url))); }
                 catch (Exception e) { toast("열 수 있는 앱이 없어요"); }
             });
         }
