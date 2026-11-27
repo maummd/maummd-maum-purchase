@@ -188,8 +188,43 @@ public class MainActivity extends Activity {
                 boolean tel = url.startsWith("tel:"), sms = url.startsWith("sms:");
                 if (!(tel || sms || url.startsWith("https://") || url.startsWith("http://") || url.startsWith("coupang://"))) return;
                 // 전화는 바로 걸지 않고 번호가 입력된 전화 화면만 엽니다.
-                try { startActivity(new Intent(tel ? Intent.ACTION_DIAL : (sms ? Intent.ACTION_SENDTO : Intent.ACTION_VIEW), Uri.parse(url))); }
+                try {
+                    if (sms) {
+                        // sms:번호?body=내용 → 문자 앱에 번호와 내용을 넣어 엽니다 (보내기는 직접 누름)
+                        String num = url.substring(4), body = null;
+                        int q = num.indexOf('?');
+                        if (q >= 0) {
+                            String qs = num.substring(q + 1); num = num.substring(0, q);
+                            for (String kv : qs.split("&")) if (kv.startsWith("body=")) body = Uri.decode(kv.substring(5));
+                        }
+                        Intent it = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + num));
+                        if (body != null) it.putExtra("sms_body", body);
+                        startActivity(it);
+                    } else startActivity(new Intent(tel ? Intent.ACTION_DIAL : Intent.ACTION_VIEW, Uri.parse(url)));
+                }
                 catch (Exception e) { toast("열 수 있는 앱이 없어요"); }
+            });
+        }
+
+        /** 식단표 사진(PNG)을 문자 · 카톡 등으로 보냅니다. number가 있으면 문자 앱에 받는 사람으로 넣어 봅니다. */
+        @JavascriptInterface
+        public void shareImage(String name, String b64, String text, String number) {
+            runOnUiThread(() -> {
+                try {
+                    java.io.File dir = new java.io.File(getCacheDir(), "share");
+                    dir.mkdirs();
+                    java.io.File f = new java.io.File(dir, (name == null || name.isEmpty() ? "식단표" : name) + ".png");
+                    byte[] data = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+                    try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(data); }
+                    Uri uri = androidx.core.content.FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("image/png");
+                    i.putExtra(Intent.EXTRA_STREAM, uri);
+                    if (text != null) { i.putExtra(Intent.EXTRA_TEXT, text); i.putExtra("sms_body", text); }
+                    if (number != null && !number.isEmpty()) i.putExtra("address", number);
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(i, "식단표 보내기"));
+                } catch (Exception e) { toast("사진을 보내지 못했어요"); }
             });
         }
 
