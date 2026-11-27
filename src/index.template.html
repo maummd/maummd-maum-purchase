@@ -107,13 +107,32 @@ dl dd{white-space:pre-wrap}
 .line i{color:#B7C0B8;font-style:normal;font-size:13px}
 button.alert{border:none;font:inherit;cursor:pointer}
 input:disabled{background:#F2F3F0;color:var(--sub)}
-.sg-w{overflow-x:auto;margin:0 0 10px}.sg{border-collapse:collapse;width:100%;table-layout:fixed;font-size:13.5px}
-@media(max-width:520px){.sg{font-size:11.5px}.sg th{font-size:11px;padding:6px 1px;letter-spacing:-.3px}.sg-c{padding:6px 2px;height:64px}.sg-x{font-size:18px}}
-.sg th{background:#F3EAC2;color:#111;font-weight:700;padding:7px 4px;border:1.5px solid #333;text-align:center;font-size:13px}.sg th.sat{color:#1F5FA8}.sg th.sun{color:#C0392B}.sg th.today{background:#F5C76B}
-.sg-c{border:1.5px solid #333;vertical-align:middle;text-align:center;padding:8px 4px;height:74px;cursor:pointer;position:relative;background:#fff}.sg-c:active{background:#F4F7F5}
-.sg-c.today{box-shadow:inset 0 0 0 3px #E0A030}.sg-c.rest{background:#F6F6F4}.sg-m{line-height:1.35;word-break:keep-all}.sg-m b{color:#2F5D50}.sg-x{font-size:22px;font-weight:800;color:#888}.sg-n{font-size:11.5px;color:#888}
-.sg-st{position:absolute;top:2px;right:3px;font-size:10.5px;border-radius:6px;padding:0 4px;background:#DDEFE5;color:#2F5D50}.sg-c.received .sg-st{background:#2F5D50;color:#fff}
-.sg-c.ordered{background:#F4FAF6}.sg-c.received{background:#EAF4EE}.sg-dot{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid #999;margin-right:4px;vertical-align:-1px}.sg-dot.plan{background:#fff}.sg-dot.ordered{background:#F4FAF6}.sg-dot.received{background:#EAF4EE}
+.lt-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -2px 14px;padding:4px 2px;position:sticky;top:0;z-index:5;background:var(--bg)}
+.lt-tab{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 10px;border-radius:14px;background:#fff;border:1.5px solid #E3E7E1;font-size:13px;font-weight:700;color:#4E5B56;min-width:66px}
+.lt-tab span{font-size:19px;line-height:1.2}.lt-tab.on{background:linear-gradient(135deg,#FF8A3D,#FF5E62);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(255,94,98,.3)}
+.lt-period{display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:10px 12px;margin-bottom:10px;border:1.5px solid #FFE1C7;text-align:center}
+.lt-period b{display:block;font-size:18px;color:#1B2623}.lt-period span{font-size:13px;color:#6B7570}
+.lt-nav{width:44px;height:44px;border-radius:12px;background:#FFF1E5;color:#E8642C;font-size:28px;font-weight:700;line-height:1}
+.lt-days{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff;border-radius:16px;padding:10px 12px;margin-bottom:12px;border:1.5px solid #E3E7E1}
+.lt-dl{font-size:13.5px;font-weight:700;color:#4E5B56;margin-right:2px}
+.lt-day{width:40px;height:40px;border-radius:50%;border:2px dashed #C9CFC8;background:#fff;color:#9AA39E;font-weight:800;font-size:15.5px;transition:transform .1s}
+.lt-day:active{transform:scale(.92)}.lt-day.on{border:2px solid #12A36B;background:#12A36B;color:#fff;box-shadow:0 3px 8px rgba(18,163,107,.3)}
+.lt-day.sat.on{background:#2F80ED;border-color:#2F80ED;box-shadow:0 3px 8px rgba(47,128,237,.3)}.lt-day.sun.on{background:#EB5757;border-color:#EB5757;box-shadow:0 3px 8px rgba(235,87,87,.3)}
+.lt-more summary{font-weight:700;cursor:pointer;color:#2F5D50}.lt-wk{font-size:14px;margin:12px 0 2px;color:#E8642C}
+.sg-w{overflow-x:auto;margin:0 0 10px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}.sg{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;font-size:14px;background:#fff;border-radius:14px;overflow:hidden;border:2px solid #1B2623}
+.sg th{background:#FFD84D;color:#1B2623;font-weight:800;padding:8px 3px;border-right:1.5px solid #1B2623;border-bottom:2px solid #1B2623;text-align:center;font-size:13.5px}.sg th:last-child,.sg-c:last-child{border-right:none}
+.sg th.sat{background:#CFE3FF;color:#1D5FC2}.sg th.sun{background:#FFD3D3;color:#C62828}.sg th.today{background:#FF8A3D;color:#fff}
+.sg-c{border-right:1.5px solid #1B2623;vertical-align:middle;text-align:center;padding:9px 4px;height:80px;cursor:pointer;position:relative;background:#fff}.sg-c:active{background:#FFF7EE}
+.sg-c.today{box-shadow:inset 0 0 0 3px #FF8A3D}.sg-c.rest{background:repeating-linear-gradient(135deg,#FAFAF8 0 8px,#F1F2EE 8px 16px)}
+.sg-m{line-height:1.35;word-break:keep-all;font-weight:600;color:#1B2623}.sg-m b{display:inline-block;margin-left:2px;padding:0 6px;border-radius:99px;background:#FFE7D3;color:#D9541E;font-size:.95em}
+.sg-x{font-size:24px;font-weight:900;color:#C3C8C4}.sg-n{font-size:11.5px;color:#8A938E}
+.sg-st{position:absolute;top:3px;right:3px;font-size:10.5px;font-weight:700;border-radius:6px;padding:0 5px;background:#D7F5E6;color:#0E7A50}.sg-c.received .sg-st{background:#12A36B;color:#fff}
+.sg-c.ordered{background:#F2FFF8}.sg-c.received{background:#E3F8EE}.sg-dot{display:inline-block;width:12px;height:12px;border-radius:4px;border:1.5px solid #1B2623;margin-right:4px;vertical-align:-1px}.sg-dot.plan{background:#fff}.sg-dot.ordered{background:#F2FFF8}.sg-dot.received{background:#E3F8EE}
+@media(max-width:520px){.sg{font-size:12px}.sg th{font-size:11.5px;padding:7px 1px;letter-spacing:-.3px}.sg-c{padding:7px 2px;height:70px}.sg-x{font-size:19px}.lt-day{width:36px;height:36px;font-size:14.5px}.lt-tab{min-width:60px;font-size:12px;padding:7px 6px}}
+.lt-days{justify-content:space-between}.lt-days .lt-dl{margin-bottom:2px;width:100%}
+.lt-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.lt-act{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:12px;border-radius:14px;text-align:left;color:#fff}
+.lt-act span{font-size:22px}.lt-act b{font-size:15.5px}.lt-act small{font-size:12.5px;opacity:.9}.lt-act.a1{grid-column:1/-1;background:linear-gradient(135deg,#12A36B,#0E8C8C)}.lt-act.a2{background:linear-gradient(135deg,#FF8A3D,#FF5E62)}.lt-act.a3{background:#fff;color:#1B2623;border:1.5px solid #D9DED7}.lt-act:disabled{background:#F1F2EE;color:#9AA39E}
+.sg-m{overflow-wrap:anywhere}
 </style></head><body>
 <div class="wrap" id="app"><div class="empty" style="padding-top:40vh">불러오는 중…</div></div>
 <nav id="nav" hidden></nav>
@@ -539,7 +558,7 @@ function vSettings(){
    <h3>배송지</h3>${Object.entries(SITES).map(([k,l])=>`<label class="f">${l}</label><div class="row"><input class="grow" data-addr="${k}" value="${esc(st.addr[k]||'')}" placeholder="배송 주소" ${dis}><button class="btn sm ghost" data-copyaddr="${k}">복사</button></div>`).join('')}</div>
   <div class="card"><h2>문서</h2><button class="btn ghost" data-act="printHandover">📄 인수인계서 만들기</button>${adm?' <button class="btn ghost" data-act="backup">전체 기록 내려받기</button>':''}</div>`:''}
   <div class="card"><h2>계정</h2><div class="row"><button class="btn ghost grow" data-act="leave">기관 연결 끊기</button>${ST.mode==='firebase'?'<button class="btn ghost grow" data-act="logout">로그아웃</button>':''}</div></div>
-  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v2.9.2 · maumm.org</p>`;
+  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v3.0 · maumm.org</p>`;
 }
 function membersCard(){const ms=S.members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   return `<div class="card"><h2>구성원 · 결재 라인 <span class="bd">${ms.length}명</span></h2>
@@ -818,7 +837,7 @@ function planDay(ds){
 const orderLine=pl=>pl.lines.map((l,i)=>`${i?'+ ':''}${l.name} ${l.qty}개`).join(' ');
 const lunchCost=ds=>{const d=lday(ds);if(d&&d.paid!=null&&d.paid!=='')return +d.paid||0;const p=planDay(ds);return p?p.total:0};
 // 기간: 월요일부터 weeks주
-let lunchStart=null;
+let lunchStart=null,lunchTab='sheet';
 function lunchPeriod(){const c=LC()||LUNCH_DEFAULT();if(!lunchStart)lunchStart=ymd(weekStart());const s=new Date(lunchStart+'T00:00'),days=[];
   return lunchWeeks().flat()}
 // 주마다 보여 줄 날: 월~금은 늘 (안 시키는 날은 X), 토 · 일은 주문 요일로 골랐을 때만
@@ -841,22 +860,26 @@ function vLunch(){
   const todayPl=planDay(t);
   const cost=days.reduce((s,ds)=>s+lunchCost(ds),0),n=days.filter(ds=>planDay(ds)).length;
   const weeks=lunchWeeks();
+  const TABS=[['sheet','📋','주문표'],...(canLunch()?[['sms','✉️','문자 · 요일'],['auto','✨','자동 추천'],['import','📥','불러오기'],['set','⚙️','설정']]:[])];
+  if(!TABS.some(x=>x[0]===lunchTab))lunchTab='sheet';
+  const od=orderDays(c);
   return hdr('도시락',`${esc(c.store)} · ${esc(c.deliver)} · ${esc(c.pay)}`)+lunchErrCard()+`
-  ${lunchStoreCard(c)}
+  <div class="lt-tabs">${TABS.map(([k,i,l])=>`<button class="lt-tab ${lunchTab===k?'on':''}" data-ltab="${k}"><span>${i}</span>${l}</button>`).join('')}</div>
+  ${lunchTab==='sheet'?`
   ${todayPl&&todayPl.d.status!=='received'?`<div class="card" style="border-color:var(--warn)"><h2>🍱 오늘 ${md(t)} <span class="bd ${LST[todayPl.d.status||'plan'][1]}">${LST[todayPl.d.status||'plan'][0]}</span></h2><div class="n" style="font-size:17px;font-weight:700">${esc(orderLine(todayPl))}</div>
    <p class="muted">총 ${todayPl.count}개 · ${won(todayPl.total)}${todayPl.center.length?' · 센터 준비: '+todayPl.center.map(([k,w])=>`${esc(k)} ${w.length}`).join(', '):''} · 변경은 ${esc(c.deadline)} 전에 연락</p>
    <div class="row w" style="margin-top:8px"><button class="btn sm" data-lday="${t}">인원 · 메뉴 확인</button><button class="btn sm ghost" data-lmsg="${t}">주문 문자</button><button class="btn sm ghost" data-lserve="${t}">배식표</button></div></div>`:''}
-  <div class="row" style="margin-bottom:10px"><button class="btn ghost sm" data-lnav="-1">◀</button><b class="grow" style="text-align:center">${md(first)} ~ ${md(last)}</b><button class="btn ghost sm" data-lnav="1">▶</button></div>
-  <div class="card"><div class="sum"><div><b>${n}</b><span>주문하는 날</span></div><div><b>${won(cost)}</b><span>기간 예상 비용</span></div><div><b>${c.members.filter(p=>p.active!==false).length}</b><span>회원</span></div></div>
-   ${c.menus.some(m=>!+m.price)?'<p class="muted" style="margin-top:8px">💡 메뉴 가격을 넣으면 비용이 계산돼요 (아래 ‘메뉴 · 가격’).</p>':''}</div>
+  <div class="lt-period"><button class="lt-nav" data-lnav="-1" aria-label="이전 기간">‹</button><div class="grow"><b>${md(first)} ~ ${md(last)}</b><span>${+c.weeks||3}주 · 주문 ${n}일 · ${won(cost)}</span></div><button class="lt-nav" data-lnav="1" aria-label="다음 기간">›</button></div>
+  ${canLunch()?`<div class="lt-days"><span class="lt-dl">주문 요일 <small style="font-weight:500;color:#8A938E">누르면 켜고 꺼요</small></span>${[1,2,3,4,5,6,0].map(w=>`<button class="lt-day ${od.includes(w)?'on':''} ${w===6?'sat':w===0?'sun':''}" data-auday="${w}" aria-pressed="${od.includes(w)}">${DOWK[w]}</button>`).join('')}</div>`:''}
   ${sheetGrid(c,weeks,t)}
-  ${weeks.map(w=>`<div class="card"><h2>${md(w[0])} 주</h2>${w.map(ds=>{const d=lday(ds),pl=planDay(ds),st=d&&d.status||'plan';
-    return `<button class="lrow" data-lday="${ds}"><span class="ldate ${ds===t?'today':''}">${md(ds)}</span><span class="grow" style="text-align:left">${pl?`<b>${esc(orderLine(pl))}</b><span class="muted" style="display:block;font-size:13.5px">${pl.count}개 · ${won(lunchCost(ds))}${pl.center.length?' · 센터: '+pl.center.map(([k,w])=>`${esc(k)} ${w.length}`).join(', '):''}${pl.notes.length?' · ⚠️ '+esc(pl.notes.join(' / ')):''}${pl.unknown.length?' · ❓메뉴 목록에 없음':''}${pl.fixed?' · 📥 주문표 수량':''}</span>`:`<span class="muted">${d&&d.off?'✕ '+esc(d.note||'주문 안 함'):'메뉴를 정해 주세요'}</span>`}</span>${pl?`<span class="bd ${LST[st][1]}">${LST[st][0]}</span>`:''}</button>`}).join('')}</div>`).join('')}
-  ${canLunch()?ruleCard(c):''}
-  ${canLunch()?autoCard(c):''}
-  ${canLunch()?`<div class="card"><h2>📥 기존 주문표 불러오기</h2><p class="muted">예전 주문표를 올리면 날짜별 메뉴 · 수량 · X(휴일)를 읽어 넣어요. <b>PDF · 워드(docx) · 엑셀(xlsx) · 한글(HWPX) · 사진</b> 모두 돼요. 사진은 글자 인식 뒤 확인 · 고치기 단계가 있어요. 한글 .hwp는 한글에서 PDF로 저장해 올려 주세요.</p><label class="btn" style="margin-top:8px;display:inline-block">파일 고르기<input type="file" id="sheetIn" accept=".pdf,.docx,.xlsx,.hwpx,.hwp,.csv,image/*" hidden></label></div>`:''}
-  <div class="row w" style="margin-bottom:12px"><button class="btn grow" data-act="lunchSheet">📄 주문표 (PDF)</button>${canLunch()?'<button class="btn ghost grow" data-act="lunchCopyPrev">지난 기간 메뉴 가져오기</button>':''}</div>
-  ${canLunch()?lunchSettings(c):''}`;
+  <div class="row w" style="margin-bottom:12px;gap:8px"><button class="btn grow" data-act="lunchSheet">📄 주문표 PDF</button>${canLunch()?`<button class="btn ghost grow" data-ltab="sms">✉️ 업체에 문자</button>`:''}</div>
+  <details class="card lt-more"><summary>날짜별 자세히 (비용 · 상태)</summary>${weeks.map(w=>`<h3 class="lt-wk">${md(w[0])} 주</h3>${w.map(ds=>{const d=lday(ds),pl=planDay(ds),st=d&&d.status||'plan';
+    return `<button class="lrow" data-lday="${ds}"><span class="ldate ${ds===t?'today':''}">${md(ds)}</span><span class="grow" style="text-align:left">${pl?`<b>${esc(orderLine(pl))}</b><span class="muted" style="display:block;font-size:13.5px">${pl.count}개 · ${won(lunchCost(ds))}</span>`:`<span class="muted">${d&&d.off?'X '+esc(d.note&&d.note!=='주문 안 함'?d.note:''):'주문 없음'}</span>`}</span>${pl?`<span class="bd ${LST[st][1]}">${LST[st][0]}</span>`:''}</button>`}).join('')}`).join('')}</details>
+  ${c.menus.some(m=>!+m.price)?'<p class="muted" style="margin:0 4px 12px;font-size:13.5px">💡 메뉴 가격을 넣으면 비용이 계산돼요 (⚙️ 설정 → 메뉴 · 가격).</p>':''}`:''}
+  ${lunchTab==='sms'?ruleCard(c)+lunchStoreCard(c):''}
+  ${lunchTab==='auto'?autoCard(c):''}
+  ${lunchTab==='import'?`<div class="card"><h2>📥 기존 주문표 불러오기</h2><p class="muted">예전 주문표를 올리면 날짜별 메뉴 · 수량 · X(휴일)를 읽어 넣어요. <b>PDF · 워드(docx) · 엑셀(xlsx) · 한글(HWPX) · 사진</b> 모두 돼요. 사진은 글자 인식 뒤 확인 · 고치기 단계가 있어요. 한글 .hwp는 한글에서 PDF로 저장해 올려 주세요.</p><label class="btn" style="margin-top:8px;display:inline-block">파일 고르기<input type="file" id="sheetIn" accept=".pdf,.docx,.xlsx,.hwpx,.hwp,.csv,image/*" hidden></label></div>`:''}
+  ${lunchTab==='set'?lunchSettings(c):''}`;
 }
 const canLunch=()=>has('buyer')||has('mid')||has('admin');
 function lunchSettings(c){
@@ -1051,10 +1074,10 @@ function sheetGrid(c,weeks,t){const sd=s=>`${+s.slice(5,7)}/${+s.slice(8,10)}`,o
 function ruleCard(c){const ch=c.sent?sheetChanges():[],od=orderDays(c),days=lunchPeriod();const sentThis=c.sent&&c.sent.from===days[0];
   return `<div class="card" style="border-color:var(--warn)"><h2>📩 주문 규칙 · 문자</h2>
    <ol class="steps" style="margin:0 0 8px"><li><b>3주씩</b> 도시락 식단표를 업체에 문자로 보내요.</li><li><b>요일 · 메뉴 · 수량</b>이 바뀌면 변동사항을 문자로 보내요.</li><li>당일 추가 · 변경은 <b>오전 ${esc(String(c.deadline||'10:00'))} 전</b>에 연락해요.</li></ol>
-   <label class="f">주문 요일 (누르면 켜고 꺼요 · 토 · 일도 돼요)</label><div class="row w">${[1,2,3,4,5,6,0].map(w=>`<button class="chip ${od.includes(w)?'on':''}" data-auday="${w}">${DOWK[w]}</button>`).join('')}</div>
+   <label class="f">주문 요일 (누르면 켜고 꺼요 · 토 · 일도 돼요)</label><div class="lt-days" style="margin:0">${[1,2,3,4,5,6,0].map(w=>`<button class="lt-day ${od.includes(w)?'on':''} ${w===6?'sat':w===0?'sun':''}" data-auday="${w}" aria-pressed="${od.includes(w)}">${DOWK[w]}</button>`).join('')}</div>
    <p class="muted" style="margin-top:6px;font-size:13px">받는 사람: ${esc(curStore(c).mobileName||curStore(c).name||'')} ${smsTarget(c)?esc(smsTarget(c)):'<b style="color:#B03A3A">휴대폰 번호 없음 — 문자 보낼 때 물어봐요</b>'}${c.sent?` · 마지막 식단표 ${md(c.sent.from)}~${md(c.sent.to)} (${esc((c.sent.at||'').slice(5,10).replace('-','/'))} 보냄)`:''}</p>
    <label class="f">식단표 보낼 때 인사말</label><input data-lc="sheetMsg" value="${esc(sheetGreeting())}">
-   <div class="row w" style="margin-top:10px"><button class="btn grow" data-act="smsSheet">📩 ${md(days[0])}~ 3주 식단표 보내기 (사진)</button><button class="btn ghost" data-act="smsSheetText">글자로</button><button class="btn ${ch.length?'':'ghost'} grow" data-act="smsChanges" ${ch.length?'':'disabled'}>🔁 변동사항 문자${ch.length?` (${ch.length})`:''}</button></div>
+   <div class="lt-acts"><button class="lt-act a1" data-act="smsSheet"><span>📩</span><b>3주 식단표 보내기</b><small>${md(days[0])}부터 · 사진으로</small></button><button class="lt-act a2" data-act="smsChanges" ${ch.length?'':'disabled'}><span>🔁</span><b>변동사항 문자</b><small>${ch.length?`바뀐 것 ${ch.length}건`:'바뀐 것 없음'}</small></button><button class="lt-act a3" data-act="smsSheetText"><span>💬</span><b>식단표 글자로</b><small>사진 없이 보내기</small></button></div>
    <label class="f">배달 주소 (업체가 물어볼 때 보내기)</label><div class="row"><input class="grow" data-lc="address" value="${esc(c.address||'')}" placeholder="예: ○○시 ○○구 ○○로 00 0층"><button class="btn sm ghost" data-act="smsAddr">보내기</button></div>
    ${ch.length?`<p class="muted" style="margin-top:8px;font-size:13px">보낼 문자: “${esc(changesSms(ch))}”</p>`:''}
    ${ch.length?`<div class="alert w" style="margin-top:10px">보낸 식단표와 달라진 날 ${ch.length}일<br>${ch.slice(0,6).map(x=>`${md(x.ds)} ${esc(x.from)} → <b>${esc(x.to)}</b>`).join('<br>')}${ch.length>6?'<br>…':''}</div>`:sentThis?'<p class="muted" style="margin-top:8px">✅ 이 기간 식단표를 보냈고, 그 뒤로 바뀐 것이 없어요.</p>':''}</div>`}
@@ -1067,7 +1090,7 @@ function prefsCard(c){const P=parsePrefs(c.prefsText),od=orderDays(c);
    <p class="muted">‘도시락 현황’의 x(못 먹음)는 자동으로 반영돼요. 그 밖에 좋아하는 것 · 싫어하는 것을 적어 주세요. 한 줄에 한 사람:<br><b>이름 좋아요: 스팸, 돈가스</b> · <b>이름 싫어요: 카레</b></p>
    <textarea id="lcPrefs" style="min-height:140px;font-size:14px" placeholder="회원A 좋아요: 스팸, 치킨마요&#10;회원B 싫어요: 카레">${esc(c.prefsText||'')}</textarea>
    <p class="muted" style="font-size:13px">읽은 내용: ${Object.keys(P).length}명 (${Object.entries(P).map(([k,v])=>`${esc(k)} ${v.like.length?'👍'+v.like.length:''}${v.dislike.length?' 👎'+v.dislike.length:''}`).join(', ')||'없음'})</p>
-   <label class="f">주문하는 요일 ${Array.isArray(c.orderDays)&&c.orderDays.length?'':'<span class="muted">(지금은 최근 주문에서 짐작)</span>'}</label><div class="row w">${[1,2,3,4,5,6,0].map(w=>`<button class="chip ${od.includes(w)?'on':''}" data-auday="${w}">${DOWK[w]}</button>`).join('')}</div>
+   <p class="muted" style="font-size:13px;margin-top:8px">주문 요일은 📋 주문표 탭 맨 위에서 바꿔요: ${orderDays(c).map(w=>DOWK[w]).join(' · ')}</p>
    <div class="two"><div><label class="f">1개 가격 상한 (선택)</label><input type="number" id="lcBudget" value="${+c.budget||''}" placeholder="예: 5500"></div><div><label class="f">추천에서 뺄 메뉴 (쉼표)</label><input id="lcExcl" value="${esc((c.autoExclude||[]).join(', '))}"></div></div>
    <button class="btn sm" style="margin-top:10px" data-act="lcPrefsSave">호불호 · 설정 저장</button></div>`}
 
@@ -1274,6 +1297,7 @@ document.addEventListener('click',async e=>{
   if(d.lstore){const c=LC();const x=lStores(c).find(y=>y.name===d.lstore);if(!c.stores)c.stores=lStores(c);c.store=x.name;c.storePhone=x.phone||'';save();render();toast(`${x.name}(으)로 주문해요 — 주문표에도 반영돼요`);return}
   if(d.lnav){const x=new Date(lunchPeriod()[0]+'T00:00');x.setDate(x.getDate()+(+d.lnav)*7*(+(LC()||{}).weeks||3));lunchStart=ymd(x);render();return}
   if(d.lday){lunchDayForm(d.lday);return}
+  if(d.ltab){lunchTab=d.ltab;render();scrollTo(0,0);return}
   if(d.lmob){const c=LC(),y=scrollY;smsNum(c,d.lmob,true);scrollTo(0,y);return}
   if(d.lmsg){const m=lunchMsg(d.lmsg);if(!m){toast('그날 메뉴가 없어요');return}const c=LC(),n=smsNum(c);if(n)sendSms(n,m);return}
   if(d.lserve){const h=lunchServeDoc(d.lserve);if(!h){toast('그날 메뉴가 없어요');return}exportDoc(h,`도시락_배식표_${d.lserve}`);return}

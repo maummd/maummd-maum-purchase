@@ -23,6 +23,12 @@ import {
 import { FIREBASE_CONFIG } from "./config.js";
 
 const clean = d => JSON.parse(JSON.stringify(d ?? null)); // undefined 제거
+// Firestore는 '목록 안의 목록'(예: [['비빔밥','참치비빔밥']])을 저장하지 못해 저장 전체를 거절합니다.
+// 서버에 쓸 때 안쪽 목록을 {_l:[…]}로 감싸고, 읽을 때 다시 풀어 줍니다.
+const enc = (v, inArr) => Array.isArray(v) ? (inArr ? { _l: v.map(x => enc(x, true)) } : v.map(x => enc(x, true)))
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, enc(x, false)])) : v;
+const dec = v => Array.isArray(v) ? v.map(dec)
+  : v && typeof v === "object" ? (Object.keys(v).length === 1 && Array.isArray(v._l) ? v._l.map(dec) : Object.fromEntries(Object.entries(v).map(([k, x]) => [k, dec(x)]))) : v;
 const MANAGER = ["admin", "mid", "final", "buyer"];
 const isManager = roles => (roles || []).some(r => MANAGER.includes(r));
 const newCode = () => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; const a = crypto.getRandomValues(new Uint8Array(6)); a.forEach(x => s += c[x % c.length]); return s; };
@@ -65,7 +71,7 @@ function firebaseStore(config) {
       try { await auth.currentUser.getIdToken(true); } catch (e) { } // 이메일 인증 정보를 새로 받기
       const orgId = doc(collection(db, "orgs")).id, code = newCode();
       const b = writeBatch(db);
-      b.set(O(orgId), clean({ name: orgName, owner: uid, joinCode: code, ...seed, updated: Date.now() }));
+      b.set(O(orgId), enc(clean({ name: orgName, owner: uid, joinCode: code, ...seed, updated: Date.now() })));
       b.set(doc(db, "orgs", orgId, "members", uid), clean({ name: myName, email, roles: Array.from(new Set(["admin", ...roles])), active: true, at: Date.now() }));
       b.set(doc(db, "joinCodes", code), { orgId });
       b.set(doc(db, "users", uid), { orgId, name: myName });
@@ -92,8 +98,8 @@ function firebaseStore(config) {
       const unsub = [];
       let roles = [], rolesKey = null;
       const sub = (ref, key, many) => unsub.push(onSnapshot(ref, s => {
-        if (many) onData({ [key]: s.docs.map(x => ({ id: x.id, ...x.data() })) });
-        else onData({ [key]: s.exists() ? { id: s.id, ...s.data() } : null });
+        if (many) onData({ [key]: s.docs.map(x => ({ id: x.id, ...dec(x.data()) })) });
+        else onData({ [key]: s.exists() ? { id: s.id, ...dec(s.data()) } : null });
       }, e => onErr && onErr(e, key)));
       const startRest = () => {
         sub(O(orgId), "org");
@@ -118,8 +124,8 @@ function firebaseStore(config) {
       return () => { mu(); while (unsub.length) unsub.pop()(); };
     },
     // 바뀐 필드를 통째로 바꿉니다. (예전 merge 저장은 체크 취소 · 지운 항목이 서버에 그대로 남았음)
-    saveOrg: (orgId, patch) => updateDoc(O(orgId), clean({ ...patch, updated: Date.now() })),
-    put: (orgId, col, id, data) => setDoc(doc(db, "orgs", orgId, col, id), clean(data)),
+    saveOrg: (orgId, patch) => updateDoc(O(orgId), enc(clean({ ...patch, updated: Date.now() }))),
+    put: (orgId, col, id, data) => setDoc(doc(db, "orgs", orgId, col, id), enc(clean(data))),
     del: (orgId, col, id) => deleteDoc(doc(db, "orgs", orgId, col, id)),
     async getPayKey(orgId) { const s = await getDoc(doc(db, "orgs", orgId, "secret", "paykey")); return s.exists() ? s.data() : null; },
     setPayKey: (orgId, v) => setDoc(doc(db, "orgs", orgId, "secret", "paykey"), { ...v, at: Date.now(), by: uid }),
