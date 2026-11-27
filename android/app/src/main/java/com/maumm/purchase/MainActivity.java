@@ -31,7 +31,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 물품 구매 관리 화면(assets/index.html)을 안전한 https 주소로 열어 줍니다.
+ * 마음 살림(물품 구매 · 결재 · 도시락) 화면(assets/index.html)을 안전한 https 주소로 열어 줍니다.
  * 구매 기록은 이 휴대폰 안(WebView 저장소)에만 저장되며 서버로 보내지 않습니다.
  *
  * 마음엠디 앱과 같은 구조에 다음을 더했습니다.
@@ -278,7 +278,7 @@ public class MainActivity extends Activity {
         public boolean copyText(String text) {
             try {
                 ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                cm.setPrimaryClip(ClipData.newPlainText("물품 구매 관리", text));
+                cm.setPrimaryClip(ClipData.newPlainText("마음 살림", text));
                 return true;
             } catch (Exception e) {
                 return false;

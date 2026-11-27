@@ -7,7 +7,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>물품 구매 관리</title>
+<title>마음 살림</title>
 <style>
 :root{--bg:#F4F5F1;--card:#fff;--ink:#1B2623;--sub:#4E5B56;--line:#D9DED7;--brand:#2F5D50;--brand2:#3E7A69;--soft:#E6F0EC;
 --clinic:#3A6894;--center:#2F7A56;--brain:#8A5BA8;--warn:#B5602A;--wbg:#FBEEE2;--bad:#B03A3A;--bbg:#F8E3E3;--ok:#2F7A56;--okbg:#E2F1E8}
@@ -146,11 +146,14 @@ input:disabled{background:#F2F3F0;color:var(--sub)}
 <datalist id="dlItems"></datalist>
 <script>/*BUNDLE*/</script>
 <script>
-/* ===================== 물품 구매 관리 =====================
-   근거: 「물품 구매 업무 인수인계서 및 체크리스트」 (외래 병원 · 센터 · 브레인)
+/* ===================== 마음 살림 (물품 구매 · 결재 · 도시락 · 지출) =====================
+   근거: 「물품 구매 업무 인수인계서 및 체크리스트」 (장소 · 부서 이름은 설정에서 기관마다 바꿈)
    결재 라인: 직원 수요 → 중간관리자 검수 → 최종관리자(원장님) 결재 → 구매 담당 결제(결제 방지 키) → 중간관리자 수령 검수 */
 const ST=window.MP_STORE;
-const SITES={clinic:'외래 병원',center:'센터',brain:'브레인'};
+// 구매 장소(부서): 기관마다 이름을 바꿀 수 있어요 (설정 → 장소 · 부서). 이름을 비우면 그 장소는 숨겨요.
+const SITES_DEF={clinic:'외래 병원',center:'센터',brain:'브레인'};let SITES={...SITES_DEF};
+function syncSites(){const o=(S&&S.org&&S.org.settings&&S.org.settings.sites)||null;if(!o){SITES={...SITES_DEF};return}SITES=Object.fromEntries(Object.keys(SITES_DEF).map(k=>[k,String(o[k]??'').trim()]).filter(([,v])=>v));if(!Object.keys(SITES).length)SITES={clinic:'본원'}}
+const siteList=()=>Object.values(SITES).join(' · ');
 const CYCLES={M1:'월 1회',W1:'주 1회',W2:'주 2회',ASK:'필요 시',REQ:'요청 시',AFTER:'주문 후'};
 const VENDORS=['쿠팡','네이버','기타'];
 const ROLES={staff:'직원',mid:'중간관리자',final:'최종관리자 (원장님)',buyer:'구매 담당',admin:'관리자'};
@@ -163,7 +166,7 @@ const DEFAULT_ROUTINE=()=>[
  ['M1','원장님 및 데스크 간호사 간식 조사·구매'],['M1','센터 치료진 간식 조사·구매'],['M1','브레인 간식 조사·구매'],
  ['W1','외래 병원 사무용품 및 소모품 재고 확인'],['W1','센터 사무용품 및 생활 소모품 재고 확인'],['W1','쌀 재고 확인 및 필요 시 구매'],
  ['W2','레토르트 식품 주문 및 식사 전날 도착 여부 확인'],['ASK','제과제빵 담당에게 제과제빵 재료 필요 여부 문의'],
- ['ASK','외래 병원·센터·브레인 추가 요청 물품 구매'],['AFTER','배송 완료 및 실제 물품 수령 여부 확인']].map(([c,t])=>({id:uid(),cycle:c,text:t}));
+ ['ASK','각 장소 · 부서 추가 요청 물품 구매'],['AFTER','배송 완료 및 실제 물품 수령 여부 확인']].map(([c,t])=>({id:uid(),cycle:c,text:t}));
 const DEFAULT_ITEMS=()=>[
  ['clinic','간식','원장님 간식','M1','널담 베이글, 우유, 두유 위주 구매. 부족하면 수시 구매',false],
  ['clinic','간식','데스크 간호사 간식','M1','간호사분께 필요한 간식을 확인하고 구매 (임의로 고르지 않기)',false],
@@ -299,7 +302,7 @@ function renderNav(){
   n.hidden=false;const q=isMgr()?myQueue().length:0;
   n.innerHTML=tabs().map(([v,ic,l])=>`<button data-v="${v}" class="${view===v?'on':''}"><span class="ic">${ic}</span>${l}${v==='home'&&q?`<span class="dot">${q}</span>`:''}</button>`).join('');
 }
-function render(){
+function render(){syncSites();
   if(!ready&&view!=='auth'&&view!=='setup'&&view!=='gone')return;
   const T=tabs().map(t=>t[0]);if(ORG&&S.me&&!['auth','setup','gone'].includes(view)&&!T.includes(view))view=T[0];
   renderNav();
@@ -315,7 +318,7 @@ const roleBadges=r=>(r||[]).filter(x=>x!=='admin'||true).map(x=>`<span class="bd
 /* ----- 로그인 · 가입 ----- */
 let authMode='in',authMsg='';
 function vAuth(){
-  return hdr('물품 구매 관리','수요조사 · 결재 · 구매 · maumm.org')+`<div class="card">
+  return hdr('마음 살림','물품 구매 · 결재 · 도시락 · 지출 · maumm.org')+`<div class="card">
    <div class="chips"><button class="chip ${authMode==='in'?'on':''}" data-am="in">로그인</button><button class="chip ${authMode==='up'?'on':''}" data-am="up">처음 가입</button></div>
    ${AUTH&&!AUTH.verified?`<div class="alert w">📧 ${esc(AUTH.email)} 로 보낸 인증 메일의 링크를 누른 뒤 ‘인증 확인’을 눌러 주세요.</div><div class="row"><button class="btn grow" data-act="checkVerify">인증 확인</button><button class="btn ghost grow" data-act="resendVerify">메일 다시 보내기</button></div><button class="btn ghost" style="width:100%;margin-top:8px" data-act="logout">다른 계정으로</button>`:`
    <label class="f">이메일</label><input id="aEmail" type="email" autocomplete="email">
@@ -333,14 +336,16 @@ function vSetup(){
    <label class="f">참여 코드</label><input id="jCode" style="text-transform:uppercase;letter-spacing:3px" maxlength="6">
    <button class="btn" style="width:100%;margin-top:12px" data-act="joinOrg">참여하기</button></div>
   <div class="card"><h2>새 기관 만들기 <span class="muted" style="font-size:13px">처음 한 번만</span></h2><p class="muted">만든 사람이 관리자가 돼요.</p>
-   <label class="f">기관 이름</label><input id="cOrg" placeholder="예: ○○정신건강의학과">
+   <label class="f">기관 이름</label><input id="cOrg" placeholder="예: ○○병원 · ○○상담소 · ○○센터">
+   <label class="f">장소 · 부서 (쉼표로 3개까지 · 나중에 바꿀 수 있어요)</label><input id="cSites" value="본원" placeholder="예: 외래, 상담실, 센터">
    <label class="f">사업자등록번호 (선택 · 나중에 설정에서 넣어도 돼요)</label><input id="cBiz" inputmode="numeric" placeholder="000-00-00000" maxlength="12">
    <label class="f">내 이름</label><input id="cName">
    <label class="f">내 역할</label>${['buyer','mid','final'].map(r=>`<label class="row" style="gap:8px;margin:3px 0"><input type="checkbox" class="cRole" value="${r}" ${r==='buyer'?'checked':''} style="width:20px;height:20px">${ROLES[r]} <span class="muted" style="font-size:13px">— ${ROLE_DESC[r]}</span></label>`).join('')}
+   <label class="row" style="gap:8px;margin-top:8px"><input type="checkbox" id="cSample" style="width:20px;height:20px"> 정신건강의학과 예시 품목 · 업무표 넣기 (나중에 설정에서 고칠 수 있어요)</label>
    <button class="btn ghost" style="width:100%;margin-top:12px" data-act="createOrg">기관 만들기</button></div>
   ${ST.mode==='firebase'?'<button class="btn ghost" style="width:100%" data-act="logout">로그아웃</button>':''}`;
 }
-function vGone(){return hdr('물품 구매 관리','')+`<div class="card"><div class="alert e">이 기관에서 나가졌거나 구성원 정보가 없어요.</div><button class="btn" style="width:100%" data-act="leave">다른 기관 연결</button></div>`}
+function vGone(){return hdr('마음 살림','')+`<div class="card"><div class="alert e">이 기관에서 나가졌거나 구성원 정보가 없어요.</div><button class="btn" style="width:100%" data-act="leave">다른 기관 연결</button></div>`}
 
 /* ----- 할 일 (관리자) ----- */
 function vHome(){
@@ -348,7 +353,7 @@ function vHome(){
   const showRoutine=has('buyer')||has('mid');
   const groups=[['M1','이번 달'],['W1','이번 주'],['W2','이번 주 (2회)'],['ASK','필요 시 · 주문 후']];
   const regular=ROUTINE().filter(r=>isRegular(r.cycle)),done=regular.filter(r=>doneCount(r.id,r.cycle)>=need(r.cycle)).length;
-  return hdr('물품 구매 관리',`${esc(orgName())} · ${esc(myName())} · ${new Date().getMonth()+1}월 ${new Date().getDate()}일`)+
+  return hdr('마음 살림',`${esc(orgName())} · ${esc(myName())} · ${new Date().getMonth()+1}월 ${new Date().getDate()}일`)+
   `<div class="row w" style="margin:-4px 0 10px">${roleBadges(rl.filter(r=>r!=='staff'))}</div>`+
   ((has('buyer')||has('final'))?bizCard():'')+
   (q.length?`<div class="card"><h2>내 차례 <span class="bd e">${q.length}</span></h2>${q.map(a=>`<button class="alert ${a.lvl}" style="display:block;width:100%;text-align:left" ${a.act?`data-act="${a.act}"`:`data-go="${a.go}"${a.of?` data-of="${a.of}"`:''}`}>${esc(a.txt)} ›</button>`).join('')}</div>`:'<div class="alert ok">✅ 지금 내 차례인 결재 · 검수 · 결제가 없어요</div>')+
@@ -433,7 +438,7 @@ function vCheck(){
    <li>원장님 간식은 주로 사는 품목(널담 베이글 · 우유 · 두유)을 먼저 확인해요.</li>
    <li>간호사 간식은 임의로 고르지 말고 필요한 것을 확인해요.</li>
    <li>복합기 잉크는 기존 제품의 모델명과 호환 여부를 확인해요.</li>
-   <li>센터와 브레인의 간식 재고 · 구매 수량은 따로 구분해요.</li>
+   <li>장소 · 부서마다 간식 재고 · 구매 수량은 따로 구분해요.</li>
    <li>제과제빵 재료는 제과제빵 담당에게 품목과 수량을 물어본 뒤 구매해요.</li>
    <li>종이컵 10oz · 종이용기 1,000cc는 실제 구매 규격을 확인해요.</li></ul></div>
   ${has('admin')?'<div class="row" style="margin-bottom:12px"><button class="btn grow" data-itedit="">+ 품목 추가</button><button class="btn ghost grow" data-act="editItems">한꺼번에 고치기</button></div>':''}`;
@@ -511,7 +516,7 @@ function expenseDoc(){
   const sum=f=>rows.filter(f).reduce((a,x)=>a+(+x.o.price||0),0);
   const cats=[...new Set(rows.map(x=>catOf(x.o)))],vend=[...new Set(rows.map(x=>x.o.vendor||'기타'))];
   const period=expFrom===expTo?ym(expFrom):`${ym(expFrom)} ~ ${ym(expTo)}`;
-  return docShell(`월별 지출 내역 (${period})`,'외래 병원 · 센터 · 브레인 · 결제일 기준',`
+  return docShell(`월별 지출 내역 (${period})`,siteList()+' · 결제일 기준',`
    <h2 style="clear:both">1. 월별 · 장소별 지출</h2>
    <table><tr><th>달</th>${Object.values(SITES).map(l=>`<th class="n">${l}</th>`).join('')}<th class="n">건수</th><th class="n">합계</th></tr>
    ${ms.map(m=>`<tr><td>${ym(m)}</td>${Object.keys(SITES).map(k=>`<td class="n">${won(sum(x=>x.day.startsWith(m)&&x.o.site===k))}</td>`).join('')}<td class="n">${rows.filter(x=>x.day.startsWith(m)).length}</td><td class="n"><b>${won(sum(x=>x.day.startsWith(m)))}</b></td></tr>`).join('')}
@@ -541,7 +546,7 @@ function vReport(){
   <div class="card"><div class="sum"><div><b>${won(tot)}</b><span>결제 합계</span></div><div><b>${paid.length}</b><span>결제 건</span></div><div><b>${os.length-paid.length}</b><span>결재 · 결제 전</span></div></div></div>
   <div class="card"><h2>장소별</h2>${grp(o=>o.site).length?grp(o=>o.site).map(([k,v])=>`<div style="margin-bottom:6px"><div class="row" style="justify-content:space-between;font-size:13.5px"><span class="site s-${k}">${SITES[k]}</span><span class="money">${won(v)}</span></div><div class="bar"><i style="width:${tot?v/tot*100:0}%;background:${cols[k]}"></i></div></div>`).join(''):'<div class="empty">이 달 결제가 없어요</div>'}
    ${paid.length?`<h3>구매처별</h3><table>${grp(o=>o.vendor||'-').map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${won(v)}</td></tr>`).join('')}</table>`:''}</div>
-  <div class="card"><h2>물품 구매 관리 기록표</h2>${os.length?`<table><tr><th>주문일</th><th>품목 · 결재</th><th class="n">금액</th><th>상태</th></tr>${os.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(o=>`<tr><td>${md(o.date)}</td><td><span class="site s-${o.site}">${SITES[o.site][0]}</span> ${esc(o.name)} ${esc(o.qty||'')}<div class="muted" style="font-size:12.5px">${signLine(o)}</div></td><td class="n">${won(o.price)}</td><td style="font-size:13px">${STAGE[o.stage][0]}</td></tr>`).join('')}</table>`:'<div class="empty">기록이 없어요</div>'}</div>`;
+  <div class="card"><h2>물품 구매 기록표</h2>${os.length?`<table><tr><th>주문일</th><th>품목 · 결재</th><th class="n">금액</th><th>상태</th></tr>${os.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(o=>`<tr><td>${md(o.date)}</td><td><span class="site s-${o.site}">${SITES[o.site][0]}</span> ${esc(o.name)} ${esc(o.qty||'')}<div class="muted" style="font-size:12.5px">${signLine(o)}</div></td><td class="n">${won(o.price)}</td><td style="font-size:13px">${STAGE[o.stage][0]}</td></tr>`).join('')}</table>`:'<div class="empty">기록이 없어요</div>'}</div>`;
 }
 
 /* ----- 설정 ----- */
@@ -561,10 +566,12 @@ function vSettings(){
    <label class="f">사업자등록번호 (쿠팡 · 네이버 사업자 결제용)</label><input data-st="bizNo" value="${esc(st.bizNo)}" inputmode="numeric" placeholder="000-00-00000" maxlength="12" ${dis}>
    ${!st.bizNo?'<p class="muted" style="margin-top:4px">비어 있어요. 숫자 10자리를 넣으면 자동으로 000-00-00000 모양이 돼요.</p>':bizValid(st.bizNo)?'<p class="muted" style="margin-top:4px">✅ 사업자등록번호 검증번호 확인</p>':'<div class="alert e" style="margin:6px 0 0">사업자등록번호 검증번호가 맞지 않아요. 숫자를 다시 확인해 주세요.</div>'}
    <div class="two"><div><label class="f">원장님 앱카드 — 단일 품목 (원 이상)</label><input type="number" data-st="approveItem" value="${st.approveItem}" ${dis}></div><div><label class="f">원장님 앱카드 — 한 번 결제 합계</label><input type="number" data-st="approveOrder" value="${st.approveOrder}" ${dis}></div></div>
+   <h3>장소 · 부서 이름</h3><p class="muted" style="font-size:13px">물품을 나눠 사는 곳이에요 (예: 외래 · 상담실 · 센터). 이름을 비우면 숨겨요.</p>
+   <div class="row" style="gap:6px">${Object.keys(SITES_DEF).map(k=>`<input class="grow" data-site-name="${k}" value="${esc((SET().sites||SITES_DEF)[k]??'')}" placeholder="(안 씀)" ${dis}>`).join('')}</div>
    <h3>배송지</h3>${Object.entries(SITES).map(([k,l])=>`<label class="f">${l}</label><div class="row"><input class="grow" data-addr="${k}" value="${esc(st.addr[k]||'')}" placeholder="배송 주소" ${dis}><button class="btn sm ghost" data-copyaddr="${k}">복사</button></div>`).join('')}</div>
   <div class="card"><h2>문서</h2><button class="btn ghost" data-act="printHandover">📄 인수인계서 만들기</button>${adm?' <button class="btn ghost" data-act="backup">전체 기록 내려받기</button>':''}</div>`:''}
   <div class="card"><h2>계정</h2><div class="row"><button class="btn ghost grow" data-act="leave">기관 연결 끊기</button>${ST.mode==='firebase'?'<button class="btn ghost grow" data-act="logout">로그아웃</button>':''}</div></div>
-  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v3.2 · maumm.org</p>`;
+  <p class="muted" style="text-align:center;margin:6px 0 14px">마음 살림 v3.3 · maumm.org</p>`;
 }
 function membersCard(){const ms=S.members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   return `<div class="card"><h2>구성원 · 결재 라인 <span class="bd">${ms.length}명</span></h2>
@@ -727,7 +734,7 @@ function rtForm(r){const n=!r;r=r||{cycle:'W1',text:''};
    <div class="row" style="margin-top:14px;justify-content:flex-end">${n?'':`<button class="btn danger" data-rtdel="${r.id}">삭제</button><span class="grow"></span>`}<button class="btn ghost" data-act="closeModal">취소</button><button class="btn" data-rtsave="${n?'':r.id}">저장</button></div>`)}
 function editItemsForm(){
   modal(`<h3>품목 · 정기 업무 고치기</h3>
-   <p class="muted">한 줄에 하나씩. 형식: <b>구분 | 분류 | 품목 | 주기 | 구매 기준 | 재고점검</b><br>구분 = 외래 병원 · 센터 · 브레인, 주기 = 월 1회 · 주 1회 · 주 2회 · 필요 시 · 요청 시, 재고점검 = O 또는 빈칸</p>
+   <p class="muted">한 줄에 하나씩. 형식: <b>구분 | 분류 | 품목 | 주기 | 구매 기준 | 재고점검</b><br>구분 = ${siteList()}, 주기 = 월 1회 · 주 1회 · 주 2회 · 필요 시 · 요청 시, 재고점검 = O 또는 빈칸</p>
    <textarea id="eItems" style="min-height:260px;font-size:13px">${esc(ITEMS().map(i=>[SITES[i.site],i.cat,i.name,CYCLES[i.cycle],i.rule,i.stock?'O':''].join(' | ')).join('\n'))}</textarea>
    <h3 style="margin-top:12px">정기 업무</h3><p class="muted">형식: <b>주기 | 업무 내용</b></p>
    <textarea id="eRoutine" style="min-height:160px;font-size:13px">${esc(ROUTINE().map(r=>CYCLES[r.cycle]+' | '+r.text).join('\n'))}</textarea>
@@ -1277,16 +1284,16 @@ function monthDoc(){
   const os=S.orders.filter(o=>(o.date||'').startsWith(repMonth)&&o.stage!=='reject').sort((a,b)=>a.date.localeCompare(b.date));
   const paid=os.filter(o=>['ship','arrived','done','issue'].includes(o.stage)),tot=sumP(paid);
   const site=k=>sumP(paid.filter(o=>o.site===k));
-  return docShell(`${repMonth.replace('-','년 ')}월 물품 구매 내역`,'외래 병원 · 센터 · 브레인',`
+  return docShell(`${repMonth.replace('-','년 ')}월 물품 구매 내역`,siteList(),`
    <table style="width:auto;min-width:60%"><tr>${Object.values(SITES).map(l=>`<th class="c">${l}</th>`).join('')}<th class="c">결제 합계</th></tr><tr>${Object.keys(SITES).map(k=>`<td class="c">${won(site(k))}</td>`).join('')}<td class="c"><b>${won(tot)}</b></td></tr></table>
-   <h2 style="clear:both">물품 구매 관리 기록표 (${os.length}건)</h2>
+   <h2 style="clear:both">물품 구매 기록표 (${os.length}건)</h2>
    <table><tr><th>주문일</th><th>구분</th><th>구매 품목</th><th>수량</th><th class="n">금액</th><th>구매처</th><th>결재 라인</th><th class="c">상태</th></tr>
    ${os.map(o=>`<tr><td>${md(o.date)}</td><td>${SITES[o.site]}</td><td>${esc(o.name)}${o.spec?` (${esc(o.spec)})`:''}${appCard(o)?'<br><small>원장님 앱카드</small>':''}</td><td>${esc(o.qty||'')}</td><td class="n">${won(o.price)}</td><td>${esc(o.vendor||'')}</td><td style="font-size:8.5pt">${signLine(o)}</td><td class="c">${STAGE[o.stage][0]}${o.issue?'<br>'+esc(o.issue):''}</td></tr>`).join('')}</table>
    ${os.some(o=>!['done'].includes(o.stage))?`<h2>미완료 · 추가 확인 필요</h2><ul>${os.filter(o=>o.stage!=='done').map(o=>`<li>${esc(o.name)} — ${STAGE[o.stage][0]}${o.issue?': '+esc(o.issue):''}</li>`).join('')}</ul>`:''}`,signBox());
 }
 function handoverDoc(){
   const st=SET(),mem=r=>S.members.filter(m=>(m.roles||[]).includes(r)&&m.active!==false).map(m=>m.name).join(', ')||'(지정 필요)';
-  return docShell('물품 구매 업무 인수인계서 및 체크리스트','외래 병원 · 센터 · 브레인 | 구매 기준 · 결재 라인 · 물품 점검 · 주문 및 수령 관리',`
+  return docShell('물품 구매 업무 인수인계서 및 체크리스트',siteList()+' | 구매 기준 · 결재 라인 · 물품 점검 · 주문 및 수령 관리',`
    <h2>1. 결재 라인 · 결제</h2><table>
     <tr><th style="width:22%">결재 라인</th><td>① 직원 수요 제출 → ② 중간관리자 검수(수량 · 필요성) → ③ 최종관리자(원장님) 결재 → ④ 구매 담당 결제(결제 방지 키 입력) → ⑤ 중간관리자 수령 검수</td></tr>
     <tr><th>담당</th><td>중간관리자: ${esc(mem('mid'))}<br>최종관리자: ${esc(mem('final'))}<br>구매 담당: ${esc(mem('buyer'))}</td></tr>
@@ -1368,7 +1375,7 @@ document.addEventListener('click',async e=>{
   if(d.lday){lunchDayForm(d.lday);return}
   if(d.latt){if(!$('.ldIn'))lunchDayForm(d.latt);attendPick(d.latt);return}
   if(d.attall!==undefined){const e=$('#attRes');if(e)delete e.dataset.keep;document.querySelectorAll('.ldIn').forEach(x=>x.checked=d.attall==='1');attCount();return}
-  if(d.attlink){const ds=d.attlink,c=LC();sendMenu({title:'출석 체크 링크 보내기',subject:`${md(ds)} 도시락 출석 체크`,text:`[${c.orderName||orgName()}] ${md(ds)} 도시락 출석 체크\n아래 링크를 열어 ‘물품 구매 관리’ 앱에 로그인하면 그날 출석 화면이 바로 열려요. 결석한 분 체크를 끄고 저장해 주세요 (마감 ${esc(c.deadline||'10:00')}).`,link:`${WEB_URL}#att/${ds}`});return}
+  if(d.attlink){const ds=d.attlink,c=LC();sendMenu({title:'출석 체크 링크 보내기',subject:`${md(ds)} 도시락 출석 체크`,text:`[${c.orderName||orgName()}] ${md(ds)} 도시락 출석 체크\n아래 링크를 열어 ‘마음 살림’ 앱에 로그인하면 그날 출석 화면이 바로 열려요. 결석한 분 체크를 끄고 저장해 주세요 (마감 ${esc(c.deadline||'10:00')}).`,link:`${WEB_URL}#att/${ds}`});return}
   if(d.snd){doSend(d.snd);return}
   if(d.ltab){lunchTab=d.ltab;render();scrollTo(0,0);return}
   if(d.lmob){const c=LC(),y=scrollY;smsNum(c,d.lmob,true);scrollTo(0,y);return}
@@ -1407,7 +1414,7 @@ document.addEventListener('click',async e=>{
   if(d.delreq){S.requests=S.requests.filter(x=>x.id!==d.delreq);re();toast('취소했어요');return}
   if(d.svclose){S.surveys.find(s=>s.id===d.svclose).open=false;re();toast('수요조사를 마감했어요');return}
   if(d.svopen){S.surveys.find(s=>s.id===d.svopen).open=true;re();return}
-  if(d.svshare){const s=S.surveys.find(x=>x.id===d.svshare);share(`[${orgName()}] 📝 ${s.title}\n${s.due?md(s.due)+'까지 ':''}필요한 물품을 ‘물품 구매 관리’ 앱 → 수요 탭에서 내 주세요.${s.note?'\n'+s.note:''}\n${WEB_URL}${has('admin')?`\n처음이면 가입 후 참여 코드 ${O().joinCode} 를 넣어 주세요.`:''}`);return}
+  if(d.svshare){const s=S.surveys.find(x=>x.id===d.svshare);share(`[${orgName()}] 📝 ${s.title}\n${s.due?md(s.due)+'까지 ':''}필요한 물품을 ‘마음 살림’ 앱 → 수요 탭에서 내 주세요.${s.note?'\n'+s.note:''}\n${WEB_URL}${has('admin')?`\n처음이면 가입 후 참여 코드 ${O().joinCode} 를 넣어 주세요.`:''}`);return}
   // 중간관리자: 수요 검수
   if(d.reqok||d.reqno){const id=d.reqok||d.reqno,r=S.requests.find(x=>x.id===id);const q=($('#rq-'+id)||{}).value,n=($('#rn-'+id)||{}).value||'';
     if(d.reqno&&!n.trim()){toast('반려 사유를 적어 주세요');$('#rn-'+id).focus();return}
@@ -1501,7 +1508,7 @@ document.addEventListener('click',async e=>{
     case 'payAllCoupang':needKey(()=>{const ok=by('pay').filter(o=>(o.vendor||'쿠팡')==='쿠팡');if(!ok.length){toast('결제할 쿠팡 주문이 없어요');return}payQueue=ok.map(o=>o.id);payPending=payQueue.shift();(SET().bizNo?copy(SET().bizNo,`사업자번호 복사됨 · ${ok.length}건 중 1번째를 열어요`):toast(`${ok.length}건 중 1번째를 열어요`));setTimeout(()=>openShop(shopUrl(ord(payPending))),400)});break;
     case 'setPayKey':{const a=$('#pk1').value,b=$('#pk2').value;if(!/^\d{4,8}$/.test(a)){toast('숫자 4~8자리로 정해 주세요');return}if(a!==b){toast('두 번 넣은 키가 달라요');return}
       const salt=uid()+uid();try{await ST.setPayKey(ORG,{salt,hash:await sha(salt+a)});$('#pk1').value=$('#pk2').value='';$('#pkState').textContent='✅ 저장했어요';toast('결제 방지 키를 저장했어요 — 구매 담당에게만 알려 주세요')}catch(err){toast(errMsg(err))}break}
-    case 'shareCode':share(`[${orgName()}] 물품 구매 관리\n1) 아래 주소를 열고 이메일로 가입 (설치 필요 없음)\n${WEB_URL}\n2) 참여 코드 ${O().joinCode} 입력\n3) 수요 탭에서 필요한 물품을 내 주세요`);break;
+    case 'shareCode':share(`[${orgName()}] 마음 살림 (물품 구매 · 결재 · 도시락)\n1) 아래 주소를 열고 이메일로 가입 (설치 필요 없음)\n${WEB_URL}\n2) 참여 코드 ${O().joinCode} 입력\n3) 수요 탭에서 필요한 물품을 내 주세요`);break;
     case 'newCode':try{await ST.newJoinCode(ORG,O().joinCode);toast('새 참여 코드를 만들었어요 — 예전 코드는 못 써요')}catch(err){toast(errMsg(err))}break;
     case 'editItems':editItemsForm();break;
     case 'saveItems':{const its=[],bad=[];$('#eItems').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{const [s,c,n,cy,r,st]=l.split('|').map(x=>(x||'').trim());const site=SITE_BY_NAME[s],cycle=CYC_BY_NAME[cy];if(!site||!n||!cycle){bad.push(i+1);return}const old=ITEMS().find(x=>x.site===site&&x.name===n);its.push({id:old?old.id:uid(),site,cat:c||'기타',name:n,cycle,rule:r||'',stock:/^o$/i.test(st||'')})});
@@ -1519,7 +1526,7 @@ document.addEventListener('click',async e=>{
       if(window.AdminAndroid&&AdminAndroid.saveFile){AdminAndroid.saveFile(name,'application/json',data);break}
       const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();break}
     case 'notiPerm':if(window.AdminAndroid&&AdminAndroid.requestNotiPermission){AdminAndroid.requestNotiPermission();toast('알림 허용 창이 뜨면 ‘허용’을 눌러 주세요')}else toast('휴대폰 앱에서 쓸 수 있어요');break;
-    case 'notiTest':if(window.AdminAndroid&&AdminAndroid.testNotification){AdminAndroid.testNotification('물품 구매 알림 시험','알림이 이렇게 떠요 ✅');toast('곧 시험 알림이 떠요')}else toast('휴대폰 앱에서 쓸 수 있어요');break;
+    case 'notiTest':if(window.AdminAndroid&&AdminAndroid.testNotification){AdminAndroid.testNotification('마음 살림 알림 시험','알림이 이렇게 떠요 ✅');toast('곧 시험 알림이 떠요')}else toast('휴대폰 앱에서 쓸 수 있어요');break;
     // 로그인 · 기관
     case 'signIn':case 'signUp':{const em=$('#aEmail').value.trim(),pw=$('#aPw').value;authMsg='';
       if(d.act==='signUp'&&pw!==$('#aPw2').value){authMsg='비밀번호 두 개가 달라요';render();return}
@@ -1531,7 +1538,7 @@ document.addEventListener('click',async e=>{
     case 'leave':if(!confirmLeave()){break}if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[],lunch:[]};await ST.leaveOrg();view='setup';render();break;
     case 'joinOrg':{const nm=$('#jName').value.trim(),cd=$('#jCode').value.trim();if(!nm||!cd){toast('이름과 참여 코드를 넣어 주세요');return}t.disabled=true;try{ORG=await ST.joinOrg(cd,nm);listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
     case 'createOrg':{const on=$('#cOrg').value.trim(),nm=$('#cName').value.trim();if(!on||!nm){toast('기관 이름과 내 이름을 넣어 주세요');return}const roles=[...document.querySelectorAll('.cRole:checked')].map(x=>x.value);t.disabled=true;
-      try{ORG=await ST.createOrg({orgName:on,myName:nm,roles,seed:{settings:{...DEFAULT_SETTINGS,bizNo:fmtBiz(($('#cBiz')||{}).value||'')},items:DEFAULT_ITEMS(),routine:DEFAULT_ROUTINE(),checks:{},stock:{}}});listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
+      try{ORG=await ST.createOrg({orgName:on,myName:nm,roles,seed:{settings:{...DEFAULT_SETTINGS,bizNo:fmtBiz(($('#cBiz')||{}).value||''),sites:(()=>{const v=(($('#cSites')||{}).value||'본원').split(/[,·/]/).map(x=>x.trim()).filter(Boolean).slice(0,3);const k=Object.keys(SITES_DEF);return Object.fromEntries(k.map((x,i)=>[x,v[i]||'']))})()},...(($('#cSample')||{}).checked?{items:DEFAULT_ITEMS(),routine:DEFAULT_ROUTINE()}:{items:[],routine:[]}),checks:{},stock:{}}});listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
   }
 });
 let _leaveArm=0;function confirmLeave(){if(Date.now()-_leaveArm<4000)return true;_leaveArm=Date.now();toast('한 번 더 누르면 이 휴대폰에서 기관 연결을 끊어요');return false}
@@ -1546,6 +1553,7 @@ document.addEventListener('change',e=>{
   if(el.id==='rSv'){const s=S.surveys.find(x=>x.id===el.value);if(s&&s.site&&s.site!=='all')$('#fSite').value=s.site;return}
   if(el.dataset.myname!==undefined){const v=el.value.trim();if(!v)return;const {id,...m}=S.me;ST.put(ORG,'members',id,{...m,name:v}).then(()=>toast('이름을 바꿨어요')).catch(err=>toast(errMsg(err)));return}
   if(el.dataset.org){S.org.name=el.value.trim()||orgName();save();toast('저장했어요');return}
+  if(el.dataset.siteName){const cur={...SITES_DEF,...(SET().sites||{})};cur[el.dataset.siteName]=el.value.trim().slice(0,12);if(!Object.values(cur).some(Boolean)){toast('장소는 하나 이상 있어야 해요');render();return}S.org.settings={...SET(),sites:cur};save();render();toast('장소 이름을 저장했어요');return}
   if(el.dataset.st){const k=el.dataset.st;S.org.settings={...SET(),[k]:['approveItem','approveOrder'].includes(k)?Math.max(0,+el.value||0):k==='bizNo'?fmtBiz(el.value):el.value.trim()};save();if(k==='bizNo')render();toast('저장했어요');return}
   if(el.dataset.addr){const s=SET();s.addr[el.dataset.addr]=el.value.trim();S.org.settings=s;save();toast('저장했어요');return}
   if(el.dataset.lc){const c=LC(),k=el.dataset.lc;const old=c.store;c[k]=['base','weeks'].includes(k)?(+el.value||0):el.value.trim();if((k==='store'||k==='storePhone')&&c.stores){const x=c.stores.find(y=>y.name===(k==='store'?old:c.store));if(x){x.name=c.store;x.phone=c.storePhone}}save();if(k==='weeks')render();toast('저장했어요');return}
