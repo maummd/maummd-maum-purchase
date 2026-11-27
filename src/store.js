@@ -16,7 +16,7 @@ import {
   signOut, sendEmailVerification, sendPasswordResetEmail,
 } from "firebase/auth";
 import {
-  initializeFirestore, persistentLocalCache, doc, setDoc, getDoc, deleteDoc, collection,
+  initializeFirestore, persistentLocalCache, doc, setDoc, updateDoc, getDoc, deleteDoc, collection,
   onSnapshot, writeBatch, query, where,
 } from "firebase/firestore";
 import { FIREBASE_CONFIG } from "./config.js";
@@ -115,7 +115,8 @@ function firebaseStore(config) {
       }, e => onErr && onErr(e, "me"));
       return () => { mu(); while (unsub.length) unsub.pop()(); };
     },
-    saveOrg: (orgId, patch) => setDoc(O(orgId), clean({ ...patch, updated: Date.now() }), { merge: true }),
+    // 바뀐 필드를 통째로 바꿉니다. (예전 merge 저장은 체크 취소 · 지운 항목이 서버에 그대로 남았음)
+    saveOrg: (orgId, patch) => updateDoc(O(orgId), clean({ ...patch, updated: Date.now() })),
     put: (orgId, col, id, data) => setDoc(doc(db, "orgs", orgId, col, id), clean(data)),
     del: (orgId, col, id) => deleteDoc(doc(db, "orgs", orgId, col, id)),
     async getPayKey(orgId) { const s = await getDoc(doc(db, "orgs", orgId, "secret", "paykey")); return s.exists() ? s.data() : null; },
