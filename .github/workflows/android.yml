@@ -111,6 +111,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest out/release/maumpurchase-release.apk \
+          gh release create latest out/release/maumpurchase-release.apk out/release/maumpurchase-release.aab \
             --title "물품 구매 관리 최신판 (빌드 ${{ github.run_number }})" \
-            --notes "휴대폰에서 maumpurchase-release.apk 를 눌러 받아 설치하세요. 버전 1.0.${{ github.run_number }}" --latest
+            --notes "휴대폰에서 maumpurchase-release.apk 를 눌러 받아 설치하세요. Google Play Console 업로드용은 maumpurchase-release.aab 입니다. 버전 1.0.${{ github.run_number }}" --latest
