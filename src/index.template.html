@@ -84,6 +84,10 @@ nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-siz
 nav button .ic{font-size:22px;line-height:1.2}
 nav button.on{color:var(--brand);font-weight:700}
 nav .dot[hidden]{display:none}
+.lrow{display:flex;gap:10px;align-items:center;width:100%;padding:11px 0;border-top:1px solid var(--line);text-align:left}
+.card h2+.lrow{border-top:none}
+.ldate{flex:none;width:68px;font-weight:700;font-size:14.5px;color:var(--sub)}.ldate.today{color:#fff;background:var(--warn);border-radius:8px;padding:2px 6px;width:auto}
+details summary{cursor:pointer;margin-top:4px}
 nav .dot{position:absolute;top:2px;left:55%;min-width:16px;height:16px;border-radius:8px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:15}
 .modal .sheet{background:#fff;width:100%;max-width:640px;margin:0 auto;border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:90vh;overflow:auto}
@@ -127,7 +131,7 @@ let _n=0;const uid=()=>Date.now().toString(36)+(_n++).toString(36)+Math.random()
 const DEFAULT_ROUTINE=()=>[
  ['M1','원장님 및 데스크 간호사 간식 조사·구매'],['M1','센터 치료진 간식 조사·구매'],['M1','브레인 간식 조사·구매'],
  ['W1','외래 병원 사무용품 및 소모품 재고 확인'],['W1','센터 사무용품 및 생활 소모품 재고 확인'],['W1','쌀 재고 확인 및 필요 시 구매'],
- ['W2','레토르트 식품 주문 및 식사 전날 도착 여부 확인'],['ASK','김수용 씨에게 제과제빵 재료 필요 여부 문의'],
+ ['W2','레토르트 식품 주문 및 식사 전날 도착 여부 확인'],['ASK','제과제빵 담당에게 제과제빵 재료 필요 여부 문의'],
  ['ASK','외래 병원·센터·브레인 추가 요청 물품 구매'],['AFTER','배송 완료 및 실제 물품 수령 여부 확인']].map(([c,t])=>({id:uid(),cycle:c,text:t}));
 const DEFAULT_ITEMS=()=>[
  ['clinic','간식','원장님 간식','M1','널담 베이글, 우유, 두유 위주 구매. 부족하면 수시 구매',false],
@@ -147,11 +151,11 @@ const DEFAULT_ITEMS=()=>[
  ['center','사무·생활 소모품','작은 종이컵','W1','기존 구매 제품의 용량 확인',true],
  ['center','사무·생활 소모품','종이용기 1,000cc','W1','기존 구매 제품의 규격 확인 (실제 구매 규격 확인 필요)',true],
  ['center','사무·생활 소모품','탁구공','W1','남은 수량 및 추가 필요 여부 확인',true],
- ['center','제과제빵','제과제빵용 대용량 버터','ASK','김수용 씨에게 필요 수량 및 기존 제품 확인',false],
- ['center','제과제빵','제과제빵용 설탕','ASK','김수용 씨에게 필요 수량 및 종류 확인',false],
- ['center','제과제빵','제과제빵용 머핀컵','ASK','김수용 씨에게 크기 및 필요 수량 확인',false],
- ['center','제과제빵','제과제빵용 밀가루','ASK','김수용 씨에게 종류 및 필요 수량 확인',false],
- ['center','제과제빵','기타 제과제빵 재료','ASK','김수용 씨 요청에 따라 구매',false],
+ ['center','제과제빵','제과제빵용 대용량 버터','ASK','제과제빵 담당에게 필요 수량 및 기존 제품 확인',false],
+ ['center','제과제빵','제과제빵용 설탕','ASK','제과제빵 담당에게 필요 수량 및 종류 확인',false],
+ ['center','제과제빵','제과제빵용 머핀컵','ASK','제과제빵 담당에게 크기 및 필요 수량 확인',false],
+ ['center','제과제빵','제과제빵용 밀가루','ASK','제과제빵 담당에게 종류 및 필요 수량 확인',false],
+ ['center','제과제빵','기타 제과제빵 재료','ASK','제과제빵 담당 요청에 따라 구매',false],
  ['brain','간식','브레인 간식','M1','필요한 간식을 조사하여 구매. 재고 소진 또는 추가 요청 시 수시 구매. 센터와 재고 · 수량 구분',false]
 ].map(([site,cat,name,cycle,rule,stock])=>({id:uid(),site,cat,name,cycle,rule,stock}));
 const DEFAULT_SETTINGS={bizNo:DEFAULT_BIZ,addr:{clinic:'',center:'',brain:''},approveItem:100000,approveOrder:200000};
@@ -159,7 +163,7 @@ const DEFAULT_NOTI={on:true,time:'09:00',monthDay:1,weekDay:1,w2Days:[1,4],lunch
 
 /* ===================== 상태 ===================== */
 let AUTH=null,ORG=null,UNSUB=null,ready=false;
-let S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};
+let S={me:null,org:null,members:[],requests:[],orders:[],surveys:[],lunch:[]};
 let BASE={};               // 서버에서 받은 마지막 모습 (바뀐 것만 저장하기 위해)
 const LK='mp-prefs-v1';
 let L;try{L=JSON.parse(localStorage.getItem(LK))||{}}catch(e){L={}}
@@ -192,7 +196,7 @@ function onData(part){
 function save(){
   if(!ORG)return;
   const errs=e=>{console.error(e);toast('⚠️ 저장하지 못했어요 — 권한 또는 연결을 확인하세요')};
-  for(const col of ['requests','orders','surveys']){
+  for(const col of ['requests','orders','surveys','lunch']){
     const base=BASE[col]||{},cur=S[col]||[],ids=new Set(cur.map(x=>x.id));
     cur.forEach(x=>{const j=JSON.stringify(x);if(base[x.id]!==j){base[x.id]=j;const {id,...d}=x;ST.put(ORG,col,id,d).catch(errs)}});
     Object.keys(base).forEach(id=>{if(!ids.has(id)){delete base[id];ST.del(ORG,col,id).catch(errs)}});
@@ -253,6 +257,7 @@ function tabs(){
   if(!isMgr())return [['demand','📝','수요'],['settings','⚙️','설정']];
   const t=[['home','🏠','할 일'],['demand','📝','수요']];
   if(has('buyer')||has('mid'))t.push(['check','📋','점검']);
+  t.push(['lunch','🍱','도시락']);
   t.push(['order','🛒','주문'],['report','📊','내역'],['settings','⚙️','설정']);
   return t;
 }
@@ -265,7 +270,7 @@ function render(){
   if(!ready&&view!=='auth'&&view!=='setup'&&view!=='gone')return;
   const T=tabs().map(t=>t[0]);if(ORG&&S.me&&!['auth','setup','gone'].includes(view)&&!T.includes(view))view=T[0];
   renderNav();
-  const V={home:vHome,demand:vDemand,check:vCheck,order:vOrder,report:vReport,settings:vSettings,auth:vAuth,setup:vSetup,gone:vGone}[view]||vHome;
+  const V={lunch:vLunch,home:vHome,demand:vDemand,check:vCheck,order:vOrder,report:vReport,settings:vSettings,auth:vAuth,setup:vSetup,gone:vGone}[view]||vHome;
   $('#app').innerHTML=V();
   fillDatalist();
 }
@@ -382,7 +387,7 @@ function vCheck(){
   <div class="chips">${[['all','전체'],...Object.entries(SITES)].map(([k,l])=>`<button class="chip ${siteF===k?'on':''}" data-site="${k}">${l}</button>`).join('')}</div>
   ${lowN?`<div class="alert w">부족 · 없음 ${lowN}개 — <button class="btn sm ghost" data-act="lowToReq">수요로 한꺼번에 올리기</button></div>`:''}
   ${cats.map(key=>{const [site,cat]=key.split('|');const list=items.filter(i=>i.site===site&&i.cat===cat);
-   return `<div class="card"><h2><span><span class="site s-${site}">${SITES[site]}</span> ${esc(cat)}</span>${cat==='제과제빵'?'<span class="bd w">김수용 씨 확인 후 구매</span>':''}</h2>
+   return `<div class="card"><h2><span><span class="site s-${site}">${SITES[site]}</span> ${esc(cat)}</span>${cat==='제과제빵'?'<span class="bd w">제과제빵 담당 확인 후 구매</span>':''}</h2>
     ${list.map(i=>{const n=doneCount(i.id,i.cycle),ok=n>=need(i.cycle),st=STOCK()[i.id];
      const ck=CHECKS()[i.id+'|'+periodKey(i.cycle)];
      return `<div class="task"><button class="ck ${ok?'on':n?'half':''}" data-it="${i.id}">${ok?'✓':''}</button><div class="grow">
@@ -396,7 +401,7 @@ function vCheck(){
    <li>간호사 간식은 임의로 고르지 말고 필요한 것을 확인해요.</li>
    <li>복합기 잉크는 기존 제품의 모델명과 호환 여부를 확인해요.</li>
    <li>센터와 브레인의 간식 재고 · 구매 수량은 따로 구분해요.</li>
-   <li>제과제빵 재료는 김수용 씨에게 품목과 수량을 물어본 뒤 구매해요.</li>
+   <li>제과제빵 재료는 제과제빵 담당에게 품목과 수량을 물어본 뒤 구매해요.</li>
    <li>종이컵 10oz · 종이용기 1,000cc는 실제 구매 규격을 확인해요.</li></ul></div>
   ${has('admin')?'<div class="row" style="margin-bottom:12px"><button class="btn grow" data-itedit="">+ 품목 추가</button><button class="btn ghost grow" data-act="editItems">한꺼번에 고치기</button></div>':''}`;
 }
@@ -448,11 +453,12 @@ function signLine(o){const p=[];const a=lastLog(o,'review'),f=lastLog(o,'final')
 /* ----- 내역 ----- */
 const PAID=['ship','arrived','done','issue'];
 const spendDay=o=>{const p=lastLog(o,'pay');return ((p&&p.at)||o.date||'').slice(0,10)};
-const catOf=o=>{const it=ITEMS().find(i=>i.name===o.name&&i.site===o.site)||ITEMS().find(i=>i.name===o.name);return it?it.cat:'기타'};
+const catOf=o=>{if(o.lunch)return '도시락';const it=ITEMS().find(i=>i.name===o.name&&i.site===o.site)||ITEMS().find(i=>i.name===o.name);return it?it.cat:'기타'};
 const ym=m=>m.replace('-','년 ').replace(/년 0/,'년 ')+'월';
 function monthsBetween(a,b){const out=[];let [y,m]=a.split('-').map(Number);const [y2,m2]=b.split('-').map(Number);while(y<y2||(y===y2&&m<=m2)){out.push(`${y}-${pad(m)}`);m++;if(m>12){m=1;y++}if(out.length>60)break}return out}
 let expFrom=null,expTo=null,expDetail=true;
-function spendRows(from,to){return S.orders.filter(o=>PAID.includes(o.stage)).map(o=>({o,day:spendDay(o)})).filter(x=>x.day.slice(0,7)>=from&&x.day.slice(0,7)<=to).sort((a,b)=>a.day.localeCompare(b.day))}
+function lunchRows(){const c=LC();if(!c)return [];return S.lunch.filter(d=>d.id.startsWith('d-')&&d.status==='received').map(d=>{const pl=planDay(d.date);return pl?{o:{id:d.id,name:`도시락 (${d.menu})`,site:'center',price:lunchCost(d.date),vendor:c.store,qty:`${pl.count}개`,stage:'done',log:[],lunch:1},day:d.date}:null}).filter(Boolean)}
+function spendRows(from,to){return [...S.orders.filter(o=>PAID.includes(o.stage)).map(o=>({o,day:spendDay(o)})),...lunchRows()].filter(x=>x.day.slice(0,7)>=from&&x.day.slice(0,7)<=to).sort((a,b)=>a.day.localeCompare(b.day))}
 function expenseCard(){
   const cur=today().slice(0,7);if(!expTo)expTo=cur;if(!expFrom)expFrom=`${cur.slice(0,4)}-01`;
   const ms=monthsBetween(expFrom,expTo),rows=spendRows(expFrom,expTo),tot=rows.reduce((a,x)=>a+(+x.o.price||0),0);
@@ -525,7 +531,7 @@ function vSettings(){
    <h3>배송지</h3>${Object.entries(SITES).map(([k,l])=>`<label class="f">${l}</label><div class="row"><input class="grow" data-addr="${k}" value="${esc(st.addr[k]||'')}" placeholder="배송 주소" ${dis}><button class="btn sm ghost" data-copyaddr="${k}">복사</button></div>`).join('')}</div>
   <div class="card"><h2>문서</h2><button class="btn ghost" data-act="printHandover">📄 인수인계서 만들기</button>${adm?' <button class="btn ghost" data-act="backup">전체 기록 내려받기</button>':''}</div>`:''}
   <div class="card"><h2>계정</h2><div class="row"><button class="btn ghost grow" data-act="leave">기관 연결 끊기</button>${ST.mode==='firebase'?'<button class="btn ghost grow" data-act="logout">로그아웃</button>':''}</div></div>
-  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v2.2 · maumm.org</p>`;
+  <p class="muted" style="text-align:center;margin:6px 0 14px">물품 구매 관리 v2.3 · maumm.org</p>`;
 }
 function membersCard(){const ms=S.members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   return `<div class="card"><h2>구성원 · 결재 라인 <span class="bd">${ms.length}명</span></h2>
@@ -697,6 +703,164 @@ function editItemsForm(){
 const SITE_BY_NAME=Object.fromEntries(Object.entries(SITES).map(([k,v])=>[v,k]));
 const CYC_BY_NAME=Object.fromEntries(Object.entries(CYCLES).map(([k,v])=>[v,k]));
 
+/* ===================== 🍱 도시락 =====================
+   주문표 형식: [기관] 기간 업체 주문표 / 기본 개수 · 변경 연락 마감 · 배달 시간 · 결제
+   회원별 예외(못 먹는 메뉴 → 대체 메뉴), 0.5+0.5(둘이 한 개)를 적용해 날마다 주문 수량을 계산합니다. */
+const LUNCH_RULES_TEXT=`돈가스도련님 x : 회원A (햇반)
+스팸마요 & 치킨마요 x : 회원B, 회원C (비빔밥) / 회원D (볶음밥)
+치킨 x : 회원E (비빔밥)
+→ 식판x, 작은 종이그릇 + 나무젓가락
+기타 모든 비빔밥 x : 회원F (스팸마요)
+도시락 0.5+0.5 : 회원A+회원D`;  // 보기용 예시. 실제 회원 이름은 앱에서 붙여 넣어 서버에만 저장합니다.
+const LUNCH_MENUS=['치즈닭갈비덮밥','치킨제육','오향 청양 소보로덮밥','소이 청양 소보로덮밥','스팸 김치볶음밥','김치볶음밥','칠리찹쌀탕수육도련님','돈가스도련님','소불고기 감초고추장비빔밥','참치야채감초고추장비빔밥','참치야채고추장비빔밥','열무 두부강된장 비빔밥','열무 감초고추장 비빔밥','돼지불백덮밥','제육많이덮밥','제육잡채밥','낙지제육비빔밥','왕카레돈가스덮밥','돈가스카레덮밥','치킨마요','스팸마요','단품 카레','반찬 돈가스'];
+
+const LUNCH_DEFAULT=()=>({id:'config',orderName:'연세사회문화센터',store:'한솥도시락(자양고점)',storePhone:'02-455-1150',centerPhone:'02-458-7367',deliver:'11시 30분 배달(1층)',pay:'카드결제',base:15,deadline:'10:00',weeks:3,
+  menus:LUNCH_MENUS.map(n=>({name:n,price:0})),members:[],
+  alias:[['비빔밥','참치야채감초고추장비빔밥'],['볶음밥','김치볶음밥'],['열무감초고추장비빔밥','열무 감초고추장 비빔밥'],['일반 돈가스카레덮밥','돈가스카레덮밥']],
+  centerItems:['햇반','빵'],rulesText:''});
+const nz=s=>String(s||'').replace(/[\s·&]+/g,'').toLowerCase();
+// 사용자가 쓰는 표기 그대로 예외 규칙을 읽습니다.
+function parseLunchRules(text){
+  const rules=[],pairs=[],notes=[],mentioned=new Set();let last=null;
+  String(text||'').split(/\n/).forEach(raw=>{
+    let line=raw.trim();if(!line)return;
+    let note='';const arrow=line.search(/→|->(?![^()]*\))/);
+    if(/^(→|->)/.test(line)){if(last)notes.push({match:last,note:line.replace(/^(→|->)\s*/,'')});return}
+    const ni=line.indexOf('→');if(ni>0){note=line.slice(ni+1).trim();line=line.slice(0,ni).trim()}
+    line=line.replace(/^(기타|기\s*∥|타\s*∥|기∥|타∥)\s*/,'').replace(/^(기타|타\s*∥|타∥)\s*/,'');
+    const pm=line.match(/0\.5\s*\+\s*0\.5\s*:\s*(.+)$/);
+    if(pm){const ns=pm[1].split(/[+,]/).map(x=>x.trim()).filter(Boolean);if(ns.length>=2)pairs.push(ns.slice(0,2));return}
+    const ci=line.indexOf(':');if(ci<0)return;
+    const left=line.slice(0,ci).replace(/\s*[xX×]\s*$/,'').replace(/모든\s*/g,'').trim();
+    const match=left.split('&').map(x=>x.trim()).filter(Boolean);if(!match.length)return;
+    last=match;if(note)notes.push({match,note});
+    const right=line.slice(ci+1).replace(/(->|→)\s*[^/()]*$/,'');
+    right.split('/').forEach(seg=>{const re=/([^()]+?)\s*\(([^)]*)\)/g;let m;
+      while((m=re.exec(seg))){const people=m[1].split(/[,，]/).map(x=>x.trim()).filter(Boolean);if(people.length)rules.push({match,people,sub:m[2].trim(),label:left})}
+      seg.replace(/[^()]*\([^)]*\)/g,'').split(/[,，]/).map(x=>x.trim()).filter(x=>/^[가-힣A-Za-z]{2,10}$/.test(x)).forEach(x=>mentioned.add(x))});
+  });
+  return {rules,pairs,notes,mentioned:[...mentioned]};
+}
+const LC=()=>S.lunch.find(x=>x.id==='config')||null;
+const LR=()=>{const c=LC();if(!c)return {rules:[],pairs:[],notes:[]};if(!LR._c||LR._t!==c.rulesText){LR._c=parseLunchRules(c.rulesText);LR._t=c.rulesText}return LR._c};
+const lday=ds=>S.lunch.find(x=>x.id==='d-'+ds);
+const ruleHit=(match,menu)=>{const m=nz(menu);return match.some(k=>k&&m.includes(nz(k)))};
+function resolveItem(name){const c=LC(),n=nz(name);if(!n)return {skip:true,name:'안 먹음'};
+  const m=c.menus.find(x=>nz(x.name)===n);if(m)return {store:true,name:m.name};
+  if((c.centerItems||[]).some(x=>nz(x)===n))return {store:false,name};
+  const al=(c.alias||[]).find(a=>nz(a[0])===n);if(al){const m2=c.menus.find(x=>nz(x.name)===nz(al[1]));return {store:true,name:m2?m2.name:al[1]}}
+  return {store:true,name,unknown:true}}
+const priceOf=name=>{const m=(LC().menus||[]).find(x=>nz(x.name)===nz(name));return m?(+m.price||0):0};
+function planDay(ds){
+  const c=LC(),d=lday(ds);if(!c||!d||!d.menu||d.off)return null;
+  const R=LR(),absent=new Set(d.absent||[]),over=d.over||{};
+  const people=c.members.filter(p=>p.active!==false&&!absent.has(p.name));
+  const assign=people.map(p=>{
+    if(over[p.name]!==undefined)return {who:p.name,raw:over[p.name],why:'직접 지정'};
+    const r=R.rules.find(r=>ruleHit(r.match,d.menu)&&r.people.includes(p.name));
+    return r?{who:p.name,raw:r.sub,why:'규칙: '+r.label}:{who:p.name,raw:d.menu};
+  }).map(a=>({...a,...resolveItem(a.raw)}));
+  const lines=new Map(),center=new Map(),skip=[];
+  const add=(n,q)=>lines.set(n,(lines.get(n)||0)+q);
+  assign.forEach(a=>{if(a.skip)skip.push(a.who);else if(a.store)add(a.name,1);else{const l=center.get(a.name)||[];l.push(a.who);center.set(a.name,l)}});
+  const shared=[];
+  R.pairs.forEach(([x,y])=>{const A=assign.find(a=>a.who===x),B=assign.find(a=>a.who===y);if(A&&B&&A.store&&B.store&&A.name===B.name&&!A.skip){add(A.name,-1);shared.push(`${x}+${y}`)}});
+  if(+d.guests>0)add(resolveItem(d.menu).name,+d.guests);
+  const main=resolveItem(d.menu).name;
+  const arr=[...lines.entries()].filter(([,q])=>q>0).sort((a,b)=>(b[0]===main)-(a[0]===main)||b[1]-a[1]).map(([name,qty])=>({name,qty,price:priceOf(name)}));
+  const total=arr.reduce((s,l)=>s+l.qty*l.price,0),count=arr.reduce((s,l)=>s+l.qty,0);
+  const notes=R.notes.filter(n=>ruleHit(n.match,d.menu)).map(n=>n.note);
+  return {d,assign,lines:arr,center:[...center.entries()],skip,shared,notes,total,count,unknown:arr.filter(l=>resolveItem(l.name).unknown)};
+}
+const orderLine=pl=>pl.lines.map((l,i)=>`${i?'+ ':''}${l.name} ${l.qty}개`).join(' ');
+const lunchCost=ds=>{const d=lday(ds);if(d&&d.paid!=null&&d.paid!=='')return +d.paid||0;const p=planDay(ds);return p?p.total:0};
+// 기간: 월요일부터 weeks주
+let lunchStart=null;
+function lunchPeriod(){const c=LC()||LUNCH_DEFAULT();if(!lunchStart)lunchStart=ymd(weekStart());const s=new Date(lunchStart+'T00:00'),days=[];
+  for(let w=0;w<(+c.weeks||3);w++)for(let k=0;k<5;k++){const x=new Date(s);x.setDate(s.getDate()+w*7+k);days.push(ymd(x))}return days}
+const LST={plan:['계획','w'],ordered:['주문함','ok'],received:['받음','ok']};
+function vLunch(){
+  const c=LC();
+  if(!c)return hdr('도시락','주문표 · 회원별 대체 메뉴 · 비용')+`<div class="card"><h2>도시락 관리 시작하기</h2><p class="muted">업체 · 메뉴는 기본값으로 만들고, 회원 명단과 ‘도시락 현황’(못 먹는 메뉴 → 대체 메뉴)은 아래에 붙여 넣어요. 회원 정보는 로그인한 관리자만 볼 수 있는 서버에만 저장돼요.</p>
+   ${canLunch()?`<label class="f">도시락 현황 (평소 쓰시던 표기 그대로 붙여 넣기)</label><textarea id="liRules" style="min-height:220px;font-size:14px" placeholder="${esc(LUNCH_RULES_TEXT)}"></textarea>
+   <label class="f">회원 명단 (한 줄에 한 명 · 비우면 위 현황에 나온 이름으로 만들어요)</label><textarea id="liMembers" style="min-height:120px"></textarea>
+   <button class="btn" style="margin-top:10px" data-act="lunchInit">🍱 시작하기</button>`:'<p class="muted">구매 담당 · 중간관리자가 시작할 수 있어요.</p>'}</div>`;
+  const days=lunchPeriod(),t=today(),first=days[0],last=days[days.length-1];
+  const todayPl=planDay(t);
+  const cost=days.reduce((s,ds)=>s+lunchCost(ds),0),n=days.filter(ds=>planDay(ds)).length;
+  const weeks=[];for(let i=0;i<days.length;i+=5)weeks.push(days.slice(i,i+5));
+  return hdr('도시락',`${esc(c.store)} · ${esc(c.deliver)} · ${esc(c.pay)}`)+`
+  ${todayPl&&todayPl.d.status!=='received'?`<div class="card" style="border-color:var(--warn)"><h2>🍱 오늘 ${md(t)} <span class="bd ${LST[todayPl.d.status||'plan'][1]}">${LST[todayPl.d.status||'plan'][0]}</span></h2><div class="n" style="font-size:17px;font-weight:700">${esc(orderLine(todayPl))}</div>
+   <p class="muted">총 ${todayPl.count}개 · ${won(todayPl.total)}${todayPl.center.length?' · 센터 준비: '+todayPl.center.map(([k,w])=>`${esc(k)} ${w.length}`).join(', '):''} · 변경은 ${esc(c.deadline)} 전에 연락</p>
+   <div class="row w" style="margin-top:8px"><button class="btn sm" data-lday="${t}">인원 · 메뉴 확인</button><button class="btn sm ghost" data-lmsg="${t}">주문 문자</button><button class="btn sm ghost" data-lserve="${t}">배식표</button></div></div>`:''}
+  <div class="row" style="margin-bottom:10px"><button class="btn ghost sm" data-lnav="-1">◀</button><b class="grow" style="text-align:center">${md(first)} ~ ${md(last)}</b><button class="btn ghost sm" data-lnav="1">▶</button></div>
+  <div class="card"><div class="sum"><div><b>${n}</b><span>주문하는 날</span></div><div><b>${won(cost)}</b><span>기간 예상 비용</span></div><div><b>${c.members.filter(p=>p.active!==false).length}</b><span>회원</span></div></div>
+   ${c.menus.some(m=>!+m.price)?'<p class="muted" style="margin-top:8px">💡 메뉴 가격을 넣으면 비용이 계산돼요 (아래 ‘메뉴 · 가격’).</p>':''}</div>
+  ${weeks.map(w=>`<div class="card"><h2>${md(w[0])} 주</h2>${w.map(ds=>{const d=lday(ds),pl=planDay(ds),st=d&&d.status||'plan';
+    return `<button class="lrow" data-lday="${ds}"><span class="ldate ${ds===t?'today':''}">${md(ds)}</span><span class="grow" style="text-align:left">${pl?`<b>${esc(orderLine(pl))}</b><span class="muted" style="display:block;font-size:13.5px">${pl.count}개 · ${won(lunchCost(ds))}${pl.center.length?' · 센터: '+pl.center.map(([k,w])=>`${esc(k)} ${w.length}`).join(', '):''}${pl.notes.length?' · ⚠️ '+esc(pl.notes.join(' / ')):''}${pl.unknown.length?' · ❓메뉴 목록에 없음':''}</span>`:`<span class="muted">${d&&d.off?'✕ '+esc(d.note||'주문 안 함'):'메뉴를 정해 주세요'}</span>`}</span>${pl?`<span class="bd ${LST[st][1]}">${LST[st][0]}</span>`:''}</button>`}).join('')}</div>`).join('')}
+  <div class="row w" style="margin-bottom:12px"><button class="btn grow" data-act="lunchSheet">📄 주문표 (PDF)</button>${canLunch()?'<button class="btn ghost grow" data-act="lunchCopyPrev">지난 기간 메뉴 가져오기</button>':''}</div>
+  ${canLunch()?lunchSettings(c):''}`;
+}
+const canLunch=()=>has('buyer')||has('mid')||has('admin');
+function lunchSettings(c){
+  const R=parseLunchRules(c.rulesText);
+  return `<div class="card"><h2>⚙️ 업체 · 주문표 정보</h2>
+   <div class="two"><div><label class="f">주문표 기관 이름</label><input data-lc="orderName" value="${esc(c.orderName)}"></div><div><label class="f">업체</label><input data-lc="store" value="${esc(c.store)}"></div></div>
+   <div class="two"><div><label class="f">업체 전화</label><input data-lc="storePhone" value="${esc(c.storePhone)}"></div><div><label class="f">센터 전화</label><input data-lc="centerPhone" value="${esc(c.centerPhone)}"></div></div>
+   <div class="two"><div><label class="f">배달</label><input data-lc="deliver" value="${esc(c.deliver)}"></div><div><label class="f">결제</label><input data-lc="pay" value="${esc(c.pay)}"></div></div>
+   <div class="two"><div><label class="f">기본 개수</label><input type="number" data-lc="base" value="${c.base}"></div><div><label class="f">변경 연락 마감</label><input type="time" data-lc="deadline" value="${esc(c.deadline)}"></div></div>
+   <label class="f">주문표 기간 (주)</label><select data-lc="weeks">${[1,2,3,4].map(w=>`<option ${+c.weeks===w?'selected':''}>${w}</option>`).join('')}</select></div>
+  <div class="card"><h2>👥 회원 명단 <span class="muted">${c.members.filter(p=>p.active!==false).length}명</span></h2><p class="muted">한 줄에 한 명. 앞에 <b>-</b>를 붙이면 ‘쉬는 중’(주문에서 빠짐).</p>
+   <textarea id="lcMembers" style="min-height:180px">${esc(c.members.map(p=>(p.active===false?'-':'')+p.name).join('\n'))}</textarea><button class="btn sm" style="margin-top:8px" data-act="lcMembersSave">명단 저장</button></div>
+  <div class="card"><h2>🍽 메뉴 · 가격</h2><p class="muted">한 줄에 하나: <b>메뉴 | 가격</b></p>
+   <textarea id="lcMenus" style="min-height:200px">${esc(c.menus.map(m=>`${m.name} | ${+m.price||''}`).join('\n'))}</textarea>
+   <label class="f">대체 메뉴 이름 → 실제 주문 메뉴 (한 줄에 하나: <b>대체 = 메뉴</b>)</label><textarea id="lcAlias" style="min-height:90px">${esc((c.alias||[]).map(a=>a[0]+' = '+a[1]).join('\n'))}</textarea>
+   <label class="f">센터에서 따로 준비하는 것 (주문하지 않음, 쉼표로)</label><input id="lcCenter" value="${esc((c.centerItems||[]).join(', '))}">
+   <button class="btn sm" style="margin-top:8px" data-act="lcMenusSave">메뉴 저장</button></div>
+  <div class="card"><h2>📝 도시락 현황 (예외 규칙)</h2><p class="muted">평소 쓰시던 표기 그대로 적으면 돼요. 예: <code>치킨 x : 이름 (비빔밥)</code><br><b>메뉴 x : 이름, 이름 (대체) / 이름 (대체)</b> · <b>→ 안내</b> · <b>도시락 0.5+0.5 : 이름+이름</b></p>
+   <textarea id="lcRules" style="min-height:260px;font-size:14px">${esc(c.rulesText)}</textarea>
+   <button class="btn sm" style="margin-top:8px" data-act="lcRulesSave">규칙 저장</button>
+   <details style="margin-top:10px"><summary class="muted">앱이 읽은 내용 확인 (${R.rules.length}개 규칙 · 0.5+0.5 ${R.pairs.length}쌍)</summary>
+   <table style="margin-top:6px"><tr><th>메뉴에 들어 있으면</th><th>사람</th><th>대체</th></tr>${R.rules.map(r=>`<tr><td>${esc(r.match.join(' · '))}</td><td>${esc(r.people.join(', '))}</td><td>${esc(r.sub)}${resolveItem(r.sub).store?'':' <span class="bd">센터</span>'}</td></tr>`).join('')}</table>
+   ${R.pairs.map(p=>`<p class="muted">0.5+0.5: ${esc(p.join(' + '))} (같은 메뉴면 1개)</p>`).join('')}${R.notes.map(n=>`<p class="muted">${esc(n.match.join('·'))} → ${esc(n.note)}</p>`).join('')}</details></div>`;
+}
+function lunchDayForm(ds){
+  const c=LC(),d=lday(ds)||{id:'d-'+ds,date:ds},pl=planDay(ds),edit=canLunch(),dis=edit?'':'disabled';
+  const opts=v=>`<option value="">(메뉴 고르기)</option>${c.menus.map(m=>`<option ${m.name===v?'selected':''}>${esc(m.name)}</option>`).join('')}${v&&!c.menus.some(m=>m.name===v)?`<option selected>${esc(v)}</option>`:''}`;
+  const itemOpts=(cur)=>[['','(규칙대로)'],...c.menus.map(m=>[m.name,m.name]),...(c.centerItems||[]).map(x=>[x,x+' (센터)']),['-','안 먹음']].map(([v,l])=>`<option value="${esc(v)}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('');
+  const absent=new Set(d.absent||[]),over=d.over||{};
+  modal(`<h3>🍱 ${md(ds)} 도시락</h3>
+   <div class="two"><div><label class="f">메뉴 (고르거나 직접 입력)</label><input id="ldMenu" list="ldMenus" value="${esc(d.menu||'')}" placeholder="메뉴" ${dis}><datalist id="ldMenus">${c.menus.map(m=>`<option value="${esc(m.name)}">`).join('')}</datalist></div><div><label class="f">주문 안 함 (휴일 · 소풍 등)</label><input id="ldOffNote" placeholder="비우면 주문하는 날" value="${esc(d.off?(d.note||'주문 안 함'):'')}" ${dis}></div></div>
+   <div class="two"><div><label class="f">추가 인원 (직원 등 · 메인 메뉴)</label><input type="number" id="ldGuests" value="${+d.guests||0}" min="0" ${dis}></div><div><label class="f">상태</label><select id="ldStatus" ${dis}>${Object.entries(LST).map(([k,[l]])=>`<option value="${k}" ${(d.status||'plan')===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
+   <label class="f">실제 결제 금액 (비우면 메뉴 가격으로 계산)</label><input type="number" id="ldPaid" value="${d.paid??''}" ${dis}>
+   <div id="ldPlan" class="alert ok" style="margin-top:10px">${pl?`<b>${esc(orderLine(pl))}</b> · ${pl.count}개 · ${won(pl.total)}`:'메뉴를 고르고 저장하면 수량이 계산돼요'}</div>
+   ${pl&&pl.notes.length?`<div class="alert w">⚠️ ${esc(pl.notes.join(' / '))}</div>`:''}
+   <h3>회원별 (출석 · 대체 메뉴)</h3><p class="muted">체크를 끄면 결석. 오른쪽에서 그날만 메뉴를 바꿀 수 있어요.</p>
+   ${c.members.filter(p=>p.active!==false).map(p=>{const a=pl&&pl.assign.find(x=>x.who===p.name);return `<div class="row" style="padding:6px 0;border-top:1px solid var(--line)"><label class="row grow" style="gap:8px"><input type="checkbox" class="ldIn" value="${esc(p.name)}" ${absent.has(p.name)?'':'checked'} style="width:20px;height:20px" ${dis}><span><b>${esc(p.name)}</b>${a&&a.why?`<span class="muted" style="display:block;font-size:13px">${esc(a.name)} · ${esc(a.why)}</span>`:a?`<span class="muted" style="display:block;font-size:13px">${esc(a.name)}</span>`:''}</span></label><select class="ldOver" data-who="${esc(p.name)}" style="width:44%;font-size:14px;padding:6px" ${dis}>${itemOpts(over[p.name]===undefined?'':(over[p.name]||'-'))}</select></div>`}).join('')}
+   <label class="f">메모</label><input id="ldNote" value="${esc(d.off?'':(d.note||''))}" ${dis}>
+   <div class="row w" style="margin-top:14px;justify-content:flex-end"><button class="btn ghost" data-lmsg="${ds}">주문 문자</button><button class="btn ghost" data-lserve="${ds}">배식표</button><span class="grow"></span><button class="btn ghost" data-act="closeModal">닫기</button>${edit?`<button class="btn" data-lsave="${ds}">저장</button>`:''}</div>`);
+}
+function lunchMsg(ds){const c=LC(),pl=planDay(ds);if(!pl)return '';return `[${c.orderName}] ${md(ds)} 도시락 주문\n${orderLine(pl)} (총 ${pl.count}개)\n${c.deliver} / ${c.pay}\n연락처 ${c.centerPhone}`}
+function lunchSheetDoc(){
+  const c=LC(),days=lunchPeriod(),y=days[0].slice(0,4),f=days[0],l=days[days.length-1],sd=s=>`${+s.slice(5,7)}/${+s.slice(8,10)}`;
+  const weeks=[];for(let i=0;i<days.length;i+=5)weeks.push(days.slice(i,i+5));
+  const cell=ds=>{const d=lday(ds),pl=planDay(ds);if(pl)return pl.lines.map((x,i)=>`${i?'+ ':''}${esc(x.name)}${pl.lines.length>1||true?` ${x.qty}개`:''}`).join('<br>');return d&&d.off?esc(d.note&&d.note!=='주문 안 함'?`X (${d.note})`:'X'):'X'};
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>도시락 주문표</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:#111;margin:0}h1{font-size:17pt;margin:0 0 6px}p{margin:2px 0;font-size:11.5pt}table{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}th,td{border:1px solid #444;text-align:center;vertical-align:middle;padding:6px 4px;font-size:12.5pt}th{background:#EEF2EF;font-size:12pt}td{height:62px;line-height:1.35}.r{display:flex;justify-content:space-between}</style></head><body>
+   <h1>[${esc(c.orderName)}] ${y}. ${sd(f)} ~ ${sd(l)} ${esc(c.store)} 주문표 / ${esc(c.storePhone)}</h1>
+   <p>기본 개수는 ${+c.base||0}개이고, 요일에 따라 1~4개 가감될 수 있습니다.</p>
+   <p class="r"><span>추가분이 발생하면 당일 오전 ${esc(c.deadline.replace(/^0/,'').replace(':00','시'))} 전에 전화 드리겠습니다.</span><span>전화) ${esc(c.centerPhone)}</span></p>
+   <p>${esc(c.deliver)} / ${esc(c.pay)}</p>
+   ${weeks.map(w=>`<table><tr>${w.map(ds=>`<th>${sd(ds)} (${DOW[new Date(ds+'T00:00').getDay()]})</th>`).join('')}</tr><tr>${w.map(ds=>`<td>${cell(ds)}</td>`).join('')}</tr></table>`).join('')}
+   </body></html>`;
+}
+function lunchServeDoc(ds){const c=LC(),pl=planDay(ds);if(!pl)return '';
+  return docShell(`${md(ds)} 도시락 배식표`,`${c.store} · ${orderLine(pl)}`,`
+   ${pl.notes.length?`<p style="font-size:12pt"><b>⚠️ ${esc(pl.notes.join(' / '))}</b></p>`:''}
+   <table><tr><th style="width:8%">✔</th><th style="width:22%">이름</th><th>받을 것</th><th style="width:28%">이유</th></tr>${pl.assign.map(a=>`<tr><td></td><td>${esc(a.who)}</td><td>${esc(a.name)}${a.store?'':' (센터 준비)'}</td><td>${esc(a.why||'')}</td></tr>`).join('')}</table>
+   ${pl.shared.length?`<p>0.5+0.5 (한 개를 나눔): ${esc(pl.shared.join(', '))}</p>`:''}
+   ${pl.center.length?`<p>센터 준비: ${pl.center.map(([k,w])=>`${esc(k)} ${w.length}개 (${esc(w.join(', '))})`).join(' · ')}</p>`:''}
+   <p>주문 합계: ${pl.count}개 · ${won(pl.total)}${+pl.d.guests?` (추가 인원 ${+pl.d.guests} 포함)`:''}</p>`)}
+
 /* ===================== 휴대폰 알림 (역할별) ===================== */
 function at(dateStr,hm){const [h,m]=(hm||'09:00').split(':').map(Number);const d=new Date(dateStr+'T00:00');d.setHours(h||0,m||0,0,0);return d.getTime()}
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
@@ -717,6 +881,7 @@ function buildReminders(){
     if(o.stage==='ship'&&o.eta&&(has('buyer')||has('mid'))){push('e-'+o.id,at(o.eta,N.time),has('mid')?'📦 오늘 도착 예정 — 수령 검수':'📦 오늘 도착 예정',`${SITES[o.site]} · ${o.name} ${o.qty||''}`);push('e2-'+o.id,at(ymd(addDays(new Date(o.eta+'T00:00'),1)),N.time),'⚠️ 수령 검수가 안 됐어요',`${SITES[o.site]} · ${o.name} — 미도착 · 누락 확인`)}
     if(o.meal&&has('buyer')&&!['done','reject'].includes(o.stage))push('meal-'+o.id,at(ymd(addDays(new Date(o.meal+'T00:00'),-1)),'15:00'),'🍱 내일 식사용 레토르트 도착했나요?',`${SITES[o.site]} · ${o.name} — 식사일 ${md(o.meal)}`);
   });
+  if(N.order&&LC()&&(has('buyer')||has('mid')))for(let i=0;i<14;i++){const ds=ymd(addDays(new Date(),i)),pl=planDay(ds);if(pl&&(pl.d.status||'plan')==='plan'){const [h,m]=(LC().deadline||'10:00').split(':').map(Number);const t=`${pad(Math.max(0,h-1))}:${pad(m||0)}`;push('lunch-'+ds,at(ds,t),`🍱 오늘 도시락 ${pl.count}개 — ${LC().deadline} 전 확인`,`${orderLine(pl)} · 결석 · 추가 인원이 있으면 업체에 연락`)}}
   if(N.approve){let k=0;for(let i=0;i<10&&k<3;i++){const d=addDays(new Date(),i),dow=d.getDay();if(dow===0||dow===6)continue;const ds=ymd(d);
       if(has('mid')){const n=S.requests.filter(r=>r.status==='submitted').length+by('review').length+by('arrived').length;if(n)push('mid-'+ds,at(ds,N.time),`🔎 검수할 것 ${n}건`,'수요 · 주문서 · 수령 검수를 확인해 주세요')}
       if(has('final')&&by('final').length)push('fin-'+ds,at(ds,N.lunch),`👨‍⚕️ 결재 대기 ${by('final').length}건`,`합계 ${won(sumP(by('final')))} — 점심 회의 때 결재해 주세요`);
@@ -789,6 +954,15 @@ document.addEventListener('click',async e=>{
   if(d.site){siteF=d.site;render();return}
   if(d.rt){const r=ROUTINE().find(x=>x.id===d.rt);toggleCheck(r.id,r.cycle);re();return}
   if(d.it){const i=ITEMS().find(x=>x.id===d.it);toggleCheck(i.id,i.cycle);re();return}
+  if(d.lnav){const x=new Date(lunchPeriod()[0]+'T00:00');x.setDate(x.getDate()+(+d.lnav)*7*(+(LC()||{}).weeks||3));lunchStart=ymd(x);render();return}
+  if(d.lday){lunchDayForm(d.lday);return}
+  if(d.lmsg){const m=lunchMsg(d.lmsg);if(!m){toast('그날 메뉴가 없어요');return}share(m);return}
+  if(d.lserve){const h=lunchServeDoc(d.lserve);if(!h){toast('그날 메뉴가 없어요');return}exportDoc(h,`도시락_배식표_${d.lserve}`);return}
+  if(d.lsave){const ds=d.lsave,old=lday(ds)||{id:'d-'+ds,date:ds};const offNote=$('#ldOffNote').value.trim();
+    const over={};document.querySelectorAll('.ldOver').forEach(x=>{if(x.value!=='')over[x.dataset.who]=x.value==='-'?'':x.value});
+    const nd={...old,date:ds,menu:$('#ldMenu').value.trim(),off:!!offNote,note:offNote||$('#ldNote').value.trim(),guests:Math.max(0,+$('#ldGuests').value||0),status:$('#ldStatus').value,paid:$('#ldPaid').value===''?null:+$('#ldPaid').value,
+      absent:[...document.querySelectorAll('.ldIn')].filter(x=>!x.checked).map(x=>x.value),over,by:myName(),at:new Date().toISOString()};
+    const i=S.lunch.findIndex(x=>x.id===nd.id);if(i<0)S.lunch.push(nd);else S.lunch[i]=nd;save();closeModal();toast('저장했어요');return}
   if(d.ckedit){const [kind,id]=d.ckedit.split('|');ckEditForm(kind,id);return}
   if(d.cksave!==undefined){const k=d.cksave,c=CHECKS()[k]||{};const dt=$('#ckDate').value||today();CHECKS()[k]={...c,n:$('#ckN')?+$('#ckN').value:(c.n||1),at:c.at||new Date().toISOString(),name:c.name||myName(),date:dt,memo:$('#ckMemo').value.trim(),editedBy:myName()};save();closeModal();toast('체크 기록을 고쳤어요');return}
   if(d.ckdel){delete CHECKS()[d.ckdel];save();closeModal();toast('체크를 취소했어요');return}
@@ -801,7 +975,7 @@ document.addEventListener('click',async e=>{
   if(d.rtsave!==undefined){const tx=$('#rText').value.trim();if(!tx){toast('업무 내용을 적어 주세요');return}const list=ROUTINE().slice();if(d.rtsave){const i=list.findIndex(x=>x.id===d.rtsave);list[i]={...list[i],cycle:$('#rCyc').value,text:tx}}else list.push({id:uid(),cycle:$('#rCyc').value,text:tx});S.org.routine=list;save();closeModal();toast('저장했어요');return}
   if(d.rtdel){S.org.routine=ROUTINE().filter(x=>x.id!==d.rtdel);save();closeModal();toast('정기 업무를 지웠어요');return}
   if(d.stock){STOCK()[d.stock]={state:d.s,at:new Date().toISOString(),name:myName()};const i=ITEMS().find(x=>x.id===d.stock);if(isRegular(i.cycle)&&!doneCount(i.id,i.cycle))toggleCheck(i.id,i.cycle);if(d.s!=='ok')toast(`${i.name} ${d.s==='out'?'없음':'부족'} — ‘수요로 올리기’를 누르면 검수로 넘어가요`);re();return}
-  if(d.buy){const i=ITEMS().find(x=>x.id===d.buy);if(S.requests.some(r=>['submitted','accepted'].includes(r.status)&&r.name===i.name&&r.site===i.site)){toast('이미 수요로 올라가 있어요');return}addReq(i.site,i.name,/제과제빵/.test(i.cat)?'김수용 씨에게 수량 확인':'','재고 점검');toast('수요로 올렸어요 — 중간관리자 검수로 넘어가요');re();return}
+  if(d.buy){const i=ITEMS().find(x=>x.id===d.buy);if(S.requests.some(r=>['submitted','accepted'].includes(r.status)&&r.name===i.name&&r.site===i.site)){toast('이미 수요로 올라가 있어요');return}addReq(i.site,i.name,/제과제빵/.test(i.cat)?'제과제빵 담당에게 수량 확인':'','재고 점검');toast('수요로 올렸어요 — 중간관리자 검수로 넘어가요');re();return}
   if(d.orderItem){const i=ITEMS().find(x=>x.id===d.orderItem);orderForm({site:i.site,name:i.name});return}
   if(d.newreqSv!==undefined){reqForm({surveyId:d.newreqSv});return}
   if(d.delreq){S.requests=S.requests.filter(x=>x.id!==d.delreq);re();toast('취소했어요');return}
@@ -857,6 +1031,17 @@ document.addEventListener('click',async e=>{
   if(d.testrole){let r=myRoles();r=r.includes(d.testrole)?r.filter(x=>x!==d.testrole):[...r,d.testrole];ST.setMyRoles(r.length?r:['staff']);return}
   switch(d.act){
     case 'closeModal':closeModal();break;
+    case 'lunchInit':{const c=LUNCH_DEFAULT();c.rulesText=($('#liRules')||{}).value||'';const R=parseLunchRules(c.rulesText);
+      let names=(($('#liMembers')||{}).value||'').split('\n').map(x=>x.trim()).filter(Boolean);
+      if(!names.length)names=[...new Set([...R.rules.flatMap(r=>r.people),...R.mentioned,...R.pairs.flat()])];
+      c.members=names.map(x=>({name:x.replace(/^-\s*/,''),active:!x.startsWith('-')}));
+      S.lunch.push(c);save();render();toast(`시작했어요 — 회원 ${c.members.length}명 · 규칙 ${R.rules.length}개. 명단에 빠진 회원을 더 넣어 주세요`);break}
+    case 'lunchSheet':exportDoc(lunchSheetDoc(),`도시락_주문표_${lunchPeriod()[0]}`);break;
+    case 'lunchCopyPrev':{const days=lunchPeriod(),n=days.length/5*7;let c=0;days.forEach(ds=>{if(lday(ds)&&(lday(ds).menu||lday(ds).off))return;const x=new Date(ds+'T00:00');x.setDate(x.getDate()-n);const p=lday(ymd(x));if(p&&(p.menu||p.off)){S.lunch.push({id:'d-'+ds,date:ds,menu:p.menu,off:p.off,note:p.off?p.note:'',guests:p.guests||0,status:'plan'});c++}});save();render();toast(c?`${c}일 메뉴를 가져왔어요 (이미 정한 날은 그대로)`:'가져올 메뉴가 없어요');break}
+    case 'lcMembersSave':{const c=LC();c.members=$('#lcMembers').value.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>({name:x.replace(/^-\s*/,''),active:!x.startsWith('-')}));save();render();toast('회원 명단을 저장했어요');break}
+    case 'lcMenusSave':{const c=LC();c.menus=$('#lcMenus').value.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{const [n,p]=x.split('|').map(y=>(y||'').trim());return {name:n,price:+String(p||'').replace(/[^\d]/g,'')||0}});
+      c.alias=$('#lcAlias').value.split('\n').map(x=>x.split('=').map(y=>y.trim())).filter(a=>a[0]&&a[1]);c.centerItems=$('#lcCenter').value.split(',').map(x=>x.trim()).filter(Boolean);save();render();toast('메뉴를 저장했어요');break}
+    case 'lcRulesSave':{const c=LC();c.rulesText=$('#lcRules').value;const r=parseLunchRules(c.rulesText);save();render();toast(`규칙 ${r.rules.length}개 · 0.5+0.5 ${r.pairs.length}쌍을 읽었어요`);break}
     case 'pwaInstall':if(_ip){_ip.prompt();_ip=null}break;
     case 'copyBiz':if(!SET().bizNo){toast('사업자등록번호가 아직 없어요');break}copy(SET().bizNo,'사업자등록번호를 복사했어요');break;
     case 'newOrder':window._resubmit=false;orderForm();break;
@@ -899,7 +1084,7 @@ document.addEventListener('click',async e=>{
     case 'checkVerify':try{if(await ST.refresh()){AUTH.verified=true;startOrg()}else toast('아직 인증되지 않았어요 — 메일의 링크를 눌러 주세요')}catch(err){toast(errMsg(err))}break;
     case 'resendVerify':try{await ST.verify();toast('인증 메일을 다시 보냈어요')}catch(err){toast(errMsg(err))}break;
     case 'logout':if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;await ST.signOut();break;
-    case 'leave':if(!confirmLeave()){break}if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};await ST.leaveOrg();view='setup';render();break;
+    case 'leave':if(!confirmLeave()){break}if(UNSUB)UNSUB();UNSUB=null;ORG=null;ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[],lunch:[]};await ST.leaveOrg();view='setup';render();break;
     case 'joinOrg':{const nm=$('#jName').value.trim(),cd=$('#jCode').value.trim();if(!nm||!cd){toast('이름과 참여 코드를 넣어 주세요');return}t.disabled=true;try{ORG=await ST.joinOrg(cd,nm);listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
     case 'createOrg':{const on=$('#cOrg').value.trim(),nm=$('#cName').value.trim();if(!on||!nm){toast('기관 이름과 내 이름을 넣어 주세요');return}const roles=[...document.querySelectorAll('.cRole:checked')].map(x=>x.value);t.disabled=true;
       try{ORG=await ST.createOrg({orgName:on,myName:nm,roles,seed:{settings:{...DEFAULT_SETTINGS,bizNo:fmtBiz(($('#cBiz')||{}).value||'')},items:DEFAULT_ITEMS(),routine:DEFAULT_ROUTINE(),checks:{},stock:{}}});listenOrg()}catch(err){t.disabled=false;toast(errMsg(err))}break}
@@ -916,12 +1101,13 @@ document.addEventListener('change',e=>{
   if(el.dataset.org){S.org.name=el.value.trim()||orgName();save();toast('저장했어요');return}
   if(el.dataset.st){const k=el.dataset.st;S.org.settings={...SET(),[k]:['approveItem','approveOrder'].includes(k)?Math.max(0,+el.value||0):k==='bizNo'?fmtBiz(el.value):el.value.trim()};save();if(k==='bizNo')render();toast('저장했어요');return}
   if(el.dataset.addr){const s=SET();s.addr[el.dataset.addr]=el.value.trim();S.org.settings=s;save();toast('저장했어요');return}
+  if(el.dataset.lc){const c=LC(),k=el.dataset.lc;c[k]=['base','weeks'].includes(k)?(+el.value||0):el.value.trim();save();if(k==='weeks')render();toast('저장했어요');return}
   if(el.dataset.noti){const k=el.dataset.noti,N=L.noti;N[k]=el.type==='checkbox'?el.checked:(['monthDay','weekDay'].includes(k)?+el.value:el.value);saveL();render();toast('알림 설정을 저장했어요');return}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='pkIn')pkCheck()});
 
 /* ===================== 시작 ===================== */
-function listenOrg(){if(UNSUB)UNSUB();ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[]};BASE={};view='home';
+function listenOrg(){if(UNSUB)UNSUB();ready=false;S={me:null,org:null,members:[],requests:[],orders:[],surveys:[],lunch:[]};BASE={};view='home';
   $('#app').innerHTML='<div class="empty" style="padding-top:40vh">기관 자료를 불러오는 중…</div>';
   UNSUB=ST.listen(ORG,onData,(err,key)=>{console.error(key,err);if(key==='me'||key==='org'){toast('기관 자료를 볼 권한이 없어요');}})}
 async function startOrg(){
@@ -938,7 +1124,7 @@ const IS_WEB=!window.AdminAndroid,WEB_URL='https://maummd.github.io/purchase/';
 function webCard(){if(!IS_WEB||matchMedia('(display-mode: standalone)').matches)return '';
   return `<div class="card"><h2>📲 홈 화면에 추가</h2><p class="muted" style="font-size:12.5px">설치 없이 이 주소로 바로 써요. 홈 화면에 추가하면 앱처럼 아이콘이 생겨요.<br>안드로이드: 크롬 메뉴(⋮) → ‘홈 화면에 추가’ · 아이폰: 사파리 공유 → ‘홈 화면에 추가’</p>${_ip?'<button class="btn" style="margin-top:8px" data-act="pwaInstall">홈 화면에 추가</button>':''}</div>`}
 window.nuBack=function(){if($('#modal').innerHTML){closeModal();return true}const T=tabs();if(ORG&&view!==T[0][0]){view=T[0][0];render();scrollTo(0,0);return true}return false};
-window.__test={S:()=>S,buildReminders,myQueue,monthDoc,handoverDoc,bizValid,sha};
+window.__test={planDay,parseLunchRules,lunchSheetDoc,lunchServeDoc,S:()=>S,buildReminders,myQueue,monthDoc,handoverDoc,bizValid,sha};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(payPending)onReturn();syncReminders()}});
 </script>
 </body></html>

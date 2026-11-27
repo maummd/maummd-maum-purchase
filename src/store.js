@@ -9,6 +9,7 @@
 //   orgs/{orgId}/requests/{id}      직원 수요 (by = 낸 사람 uid)
 //   orgs/{orgId}/orders/{id}        주문서 (stage = review → final → pay → ship → arrived → done)
 //   orgs/{orgId}/surveys/{id}       수요조사
+//   orgs/{orgId}/lunch/{id}         도시락 (config = 업체 · 메뉴 · 회원 · 예외 규칙, d-YYYY-MM-DD = 날짜별 주문)
 //   orgs/{orgId}/secret/paykey      { salt, hash }   결제 방지 키 (구매 담당 · 원장님만 읽기)
 import { initializeApp } from "firebase/app";
 import {
@@ -100,10 +101,11 @@ function firebaseStore(config) {
         if (isManager(roles)) {
           sub(collection(db, "orgs", orgId, "requests"), "requests", true);
           sub(collection(db, "orgs", orgId, "orders"), "orders", true);
+          sub(collection(db, "orgs", orgId, "lunch"), "lunch", true);
           sub(collection(db, "orgs", orgId, "members"), "members", true);
         } else {
           sub(query(collection(db, "orgs", orgId, "requests"), where("by", "==", uid)), "requests", true);
-          onData({ orders: [], members: [] });
+          onData({ orders: [], members: [], lunch: [] });
         }
       };
       // 내 역할이 바뀌면 다시 듣습니다
@@ -141,7 +143,7 @@ function localStore() {
     const o = D.orgs && D.orgs[D.orgId]; if (!o) return;
     const arr = c => Object.entries(o[c] || {}).map(([id, v]) => ({ id, ...v }));
     const me = { id: "local", ...(o.members || {}).local };
-    const all = { me, org: { id: D.orgId, ...o.doc }, surveys: arr("surveys"), requests: arr("requests"), orders: arr("orders"), members: arr("members") };
+    const all = { me, org: { id: D.orgId, ...o.doc }, surveys: arr("surveys"), requests: arr("requests"), orders: arr("orders"), members: arr("members"), lunch: arr("lunch") };
     listeners.forEach(f => f(clean(all)));
   };
   const emit = () => setTimeout(emitAll, 0);

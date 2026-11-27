@@ -54,6 +54,12 @@ service cloud.firestore {
         allow delete: if isAdmin(org);
       }
 
+      // 도시락: 관리자 역할은 보고, 구매 담당 · 중간관리자 · 관리자가 고칩니다
+      match /lunch/{id} {
+        allow read: if isMgr(org);
+        allow write: if hasRole(org, 'buyer') || hasRole(org, 'mid') || isAdmin(org);
+      }
+
       match /surveys/{id} {
         allow read: if isMember(org);
         allow write: if hasRole(org, 'mid') || hasRole(org, 'buyer') || isAdmin(org);
