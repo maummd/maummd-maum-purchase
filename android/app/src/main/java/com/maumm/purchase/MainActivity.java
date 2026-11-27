@@ -186,7 +186,7 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if (url == null) return;
                 boolean tel = url.startsWith("tel:"), sms = url.startsWith("sms:");
-                if (!(tel || sms || url.startsWith("https://") || url.startsWith("http://") || url.startsWith("coupang://"))) return;
+                if (!(tel || sms || url.startsWith("mailto:") || url.startsWith("https://") || url.startsWith("http://") || url.startsWith("coupang://"))) return;
                 // 전화는 바로 걸지 않고 번호가 입력된 전화 화면만 엽니다.
                 try {
                     if (sms) {
@@ -225,6 +225,41 @@ public class MainActivity extends Activity {
                     i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivity(Intent.createChooser(i, "식단표 보내기"));
                 } catch (Exception e) { toast("사진을 보내지 못했어요"); }
+            });
+        }
+
+        /** 문자 · 카카오톡 · 이메일 · 다른 앱으로 바로 보내기. kind: kakao | email | sms | any. b64가 있으면 사진(PNG)도 함께. */
+        @JavascriptInterface
+        public void sendTo(String kind, String name, String b64, String text, String subject, String address) {
+            runOnUiThread(() -> {
+                try {
+                    Uri img = null;
+                    if (b64 != null && !b64.isEmpty()) {
+                        java.io.File dir = new java.io.File(getCacheDir(), "share"); dir.mkdirs();
+                        java.io.File f = new java.io.File(dir, (name == null || name.isEmpty() ? "보내기" : name) + ".png");
+                        try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(android.util.Base64.decode(b64, android.util.Base64.DEFAULT)); }
+                        img = androidx.core.content.FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
+                    }
+                    Intent i;
+                    if ("email".equals(kind) && img == null) {
+                        i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + (address == null ? "" : address)));
+                    } else {
+                        i = new Intent(Intent.ACTION_SEND);
+                        i.setType(img != null ? "image/png" : "text/plain");
+                        if (img != null) { i.putExtra(Intent.EXTRA_STREAM, img); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); }
+                        if ("email".equals(kind)) { i.setSelector(new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))); if (address != null && !address.isEmpty()) i.putExtra(Intent.EXTRA_EMAIL, new String[]{address}); }
+                    }
+                    if (text != null) { i.putExtra(Intent.EXTRA_TEXT, text); i.putExtra("sms_body", text); }
+                    if (subject != null && !subject.isEmpty()) i.putExtra(Intent.EXTRA_SUBJECT, subject);
+                    if (address != null && !address.isEmpty() && "sms".equals(kind)) i.putExtra("address", address);
+                    if ("kakao".equals(kind)) {
+                        i.setPackage("com.kakao.talk");
+                        try { startActivity(i); return; }
+                        catch (android.content.ActivityNotFoundException e) { toast("카카오톡이 설치되어 있지 않아요 — 다른 앱을 골라 주세요"); i.setPackage(null); }
+                    }
+                    if ("email".equals(kind)) { try { startActivity(i); return; } catch (android.content.ActivityNotFoundException e) { toast("메일 앱을 찾지 못했어요"); i.setSelector(null); } }
+                    startActivity(Intent.createChooser(i, "보내기"));
+                } catch (Exception e) { toast("보내지 못했어요"); }
             });
         }
 
