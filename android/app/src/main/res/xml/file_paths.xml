@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 식단표 사진을 문자 앱으로 넘길 때만 쓰는 임시 폴더 -->
+<!-- 식단표 사진을 문자 앱으로 넘길 때 · 카메라로 활동지를 찍을 때 쓰는 임시 폴더 -->
 <paths>
     <cache-path name="share" path="share/" />
+    <cache-path name="camera" path="camera/" />
 </paths>

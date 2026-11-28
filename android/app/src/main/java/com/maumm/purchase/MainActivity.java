@@ -101,18 +101,7 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
-                if (pickCallback != null) pickCallback.onReceiveValue(null);
-                pickCallback = callback;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("*/*");
-                try {
-                    startActivityForResult(Intent.createChooser(i, "파일 선택"), REQ_PICK);
-                } catch (Exception e) {
-                    pickCallback = null;
-                    return false;
-                }
-                return true;
+                return openChooser(callback, params);
             }
         });
 
@@ -290,6 +279,7 @@ public class MainActivity extends Activity {
     @SuppressWarnings("deprecation")
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_CHOOSE) { chooserResult(resultCode, data); return; }
         if (requestCode == REQ_PICK) {
             if (pickCallback != null) {
                 Uri[] result = null;
@@ -339,5 +329,45 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (webView != null) webView.saveState(outState);
+    }
+    // ---------- 파일 · 사진 고르기 (카메라로 바로 찍기 포함) ----------
+    private static final int REQ_CHOOSE = 4101;
+    private android.webkit.ValueCallback<Uri[]> chooseCb;
+    private Uri cameraUri;
+    private boolean openChooser(android.webkit.ValueCallback<Uri[]> callback, android.webkit.WebChromeClient.FileChooserParams params) {
+        if (chooseCb != null) chooseCb.onReceiveValue(null);
+        chooseCb = callback; cameraUri = null;
+        String[] acc = params != null ? params.getAcceptTypes() : null;
+        boolean imageOnly = acc != null && acc.length > 0;
+        if (acc != null) for (String a : acc) if (a == null || !a.startsWith("image")) imageOnly = false;
+        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+        pick.addCategory(Intent.CATEGORY_OPENABLE);
+        pick.setType(imageOnly ? "image/*" : "*/*");
+        Intent chooser = Intent.createChooser(pick, "파일 · 사진 선택");
+        try {
+            java.io.File dir = new java.io.File(getCacheDir(), "camera");
+            dir.mkdirs();
+            java.io.File f = new java.io.File(dir, "scan_" + System.currentTimeMillis() + ".jpg");
+            cameraUri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".files", f);
+            Intent cam = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            cam.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, cameraUri);
+            cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (params != null && params.isCaptureEnabled()) {
+                try { startActivityForResult(cam, REQ_CHOOSE); return true; } catch (Exception e) { /* 카메라 앱이 없으면 고르기 화면으로 */ }
+            }
+            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{ cam });
+        } catch (Exception e) { cameraUri = null; }
+        try { startActivityForResult(chooser, REQ_CHOOSE); } catch (Exception e) { chooseCb = null; return false; }
+        return true;
+    }
+    private void chooserResult(int resultCode, Intent data) {
+        if (chooseCb == null) return;
+        Uri[] r = null;
+        if (resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) r = new Uri[]{ data.getData() };
+            else if (cameraUri != null) r = new Uri[]{ cameraUri };
+        }
+        chooseCb.onReceiveValue(r);
+        chooseCb = null; cameraUri = null;
     }
 }
