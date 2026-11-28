@@ -101,7 +101,8 @@ service cloud.firestore {
           || (from() == 'pay' && to() == 'ship' && buy())
           || (from() == 'ship' && to() == 'arrived' && (buy() || mid()))
           || (from() in ['ship', 'arrived', 'issue'] && to() in ['done', 'issue'] && mid());
-        allow delete: if (buy() || isAdmin(org)) && from() in ['review', 'reject'];
+        // 지우기: 관리자(원장님)는 지난 주문도 정리할 수 있고, 구매 담당은 결재 전 · 반려된 것만
+        allow delete: if isAdmin(org) || (buy() && from() in ['review', 'reject']);
       }
 
       // 결제 방지 키: 원장님 · 관리자가 정하고, 구매 담당이 확인
