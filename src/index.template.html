@@ -153,6 +153,7 @@ input:disabled{background:#F2F3F0;color:var(--sub)}
 <datalist id="dlItems"></datalist>
 <script src="lib/maumm-remind.js"></script>
 <script src="lib/maumm-scan.js"></script>
+<script src="lib/maumm-today.js"></script>
 <script>/*BUNDLE*/</script>
 <script>
 /* ===================== 마음 살림 (물품 구매 · 결재 · 도시락 · 지출) =====================
@@ -337,6 +338,7 @@ function render(){syncSites();
   const V={duty:vDuty,lunch:vLunch,home:vHome,demand:vDemand,check:vCheck,order:vOrder,report:vReport,settings:vSettings,auth:vAuth,setup:vSetup,gone:vGone}[view]||vHome;
   $('#app').innerHTML=V();
   remindTick();
+  if(view==='home'&&window.MToday)MToday.mount($('#mtoday'),{app:'purchase',color:'#2F5D50',soft:'#EEF4F1',fold:true,events:homeEvents,note:'달력: 📦 도착 · 🍱 도시락 · 🗓️ 당직 · 📝 마감'});
   fillDatalist();
 }
 function hdr(t,sub){return `<header><span class="logo">🛒</span><h1>${t}${sub?`<small>${sub}</small>`:''}</h1></header>`}
@@ -427,13 +429,25 @@ function vDuty(){const ds=dutySel||dutyDate(),d=new Date(ds+'T00:00'),C=DC(),L=D
    <div class="row" style="gap:8px"><button class="btn ghost grow" data-act="dutyScan">📷 사진으로 넣기</button>${(L.sheets||[]).length?'<button class="btn ghost grow" data-act="dutySheets">🗂️ 보기</button>':''}</div></div>
   <button class="btn ghost" data-act="dutyShare" style="width:100%;margin-bottom:14px">📤 당직 일정 보내기</button>
   ${S.lunch.some(x=>x.id==='duty-'+ds)?`<button class="btn ghost" data-deldutyday="${ds}" style="width:100%;margin-bottom:14px;color:#B03A2E">🗑️ 이 날 당직 기록 지우기</button>`:''}`}
+// 첫 화면 달력에 보일 일정 (내 역할에 맞는 것만)
+function homeEvents(y,m){
+  const E={},add=(ds,x)=>{if(!ds)return;(E[ds]=E[ds]||[]).push(x)},mm=`${y}-${pad(m+1)}`,inM=ds=>ds&&(ds.slice(0,7)===mm||true);
+  S.surveys.filter(x=>x.open&&x.due).forEach(x=>add(x.due,{e:'📝',t:`수요조사 마감 · ${x.title}`,c:'#C47F17'}));
+  if(isMgr()){
+    S.orders.filter(o=>o.eta&&['pay','ship','arrived','issue'].includes(o.stage)).forEach(o=>add(o.eta,{e:'📦',t:`도착 예정 · ${SN(o.site)} ${o.name}${o.qty?' '+o.qty:''}`,c:'#3B6FD8'}));
+    S.orders.filter(o=>o.meal&&!['done','reject'].includes(o.stage)).forEach(o=>add(o.meal,{e:'🍽️',t:`식사용 레토르트 · ${o.name}`,c:'#8E44AD'}));
+    if(LC()&&canLunch())S.lunch.filter(d=>d.id.startsWith('d-')&&d.date&&d.date.slice(0,7)===mm).forEach(d=>{if(d.off){add(d.date,{t:'도시락 쉬는 날',c:'#999'});return}const pl=planDay(d.date);if(pl)add(d.date,{e:'🍱',t:`도시락 ${pl.count}개 · ${d.menu}${d.status&&d.status!=='plan'?' ('+({ordered:'주문함',received:'받음'}[d.status]||d.status)+')':''}`,c:'#E67E22'})});
+    const C=DC(),last=new Date(y,m+1,0).getDate();for(let i=1;i<=last;i++){const d=new Date(y,m,i);if(d.getDay()===+C.day){const ds=ymd(d),L=DL(ds);add(ds,{e:'🗓️',t:`당직${L.who?' · '+L.who:''}${L.paid?' · 지원금 지급 완료':L.cash?' · 현금 준비 완료':''}`,c:'#2F5D50'})}}
+  }
+  return E}
 function vHome(){
   const q=myQueue(),rl=myRoles();
   const showRoutine=has('buyer')||has('mid');
   const groups=[['M1','이번 달'],['W1','이번 주'],['W2','이번 주 (2회)'],['ASK','필요 시 · 주문 후']];
   const regular=ROUTINE().filter(r=>isRegular(r.cycle)),done=regular.filter(r=>doneCount(r.id,r.cycle)>=need(r.cycle)).length;
-  return hdr('마음 살림',`${esc(orgName())} · ${esc(myName())} · ${new Date().getMonth()+1}월 ${new Date().getDate()}일`)+
+  return hdr('마음 살림',`${esc(orgName())} · ${esc(myName())}${window.MToday?'':` · ${new Date().getMonth()+1}월 ${new Date().getDate()}일`}`)+
   `<div class="row w" style="margin:-4px 0 10px">${roleBadges(rl.filter(r=>r!=='staff'))}</div>`+
+  (window.MToday?'<div id="mtoday"></div>':'')+
   ((has('buyer')||has('final'))?bizCard():'')+
   (q.length?`<div class="card"><h2>내 차례 <span class="bd e">${q.length}</span></h2>${q.map(a=>`<button class="alert ${a.lvl}" style="display:block;width:100%;text-align:left" ${a.act?`data-act="${a.act}"`:`data-go="${a.go}"${a.of?` data-of="${a.of}"`:''}`}>${esc(a.txt)} ›</button>`).join('')}</div>`:'<div class="alert ok">✅ 지금 내 차례인 결재 · 검수 · 결제가 없어요</div>')+
   (has('final')&&by('final').length?`<button class="btn" style="width:100%;margin-bottom:12px;padding:13px" data-act="finalView">👨‍⚕️ 결재하기 (${by('final').length}건)</button>`:'')+

@@ -16,5 +16,5 @@ const outFile = local ? "web/local.html" : "web/index.html";
 writeFileSync(outFile, html);
 // 주문표 불러오기 도구(pdf.js · fflate)를 앱 안에 함께 넣어요. (.js 이름이어야 안드로이드 앱에서도 열려요)
 mkdirSync("web/lib", { recursive: true });
-for (const [from, to] of [["node_modules/pdfjs-dist/legacy/build/pdf.min.mjs", "pdf.min.js"], ["node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs", "pdf.worker.min.js"], ["node_modules/fflate/esm/browser.js", "fflate.js"], ["lib/maumm-reader.js", "maumm-reader.js"], ["lib/maumm-remind.js", "maumm-remind.js"], ["lib/maumm-scan.js", "maumm-scan.js"]]) copyFileSync(from, "web/lib/" + to);
+for (const [from, to] of [["node_modules/pdfjs-dist/legacy/build/pdf.min.mjs", "pdf.min.js"], ["node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs", "pdf.worker.min.js"], ["node_modules/fflate/esm/browser.js", "fflate.js"], ["lib/maumm-reader.js", "maumm-reader.js"], ["lib/maumm-remind.js", "maumm-remind.js"], ["lib/maumm-scan.js", "maumm-scan.js"], ["lib/maumm-today.js", "maumm-today.js"]]) copyFileSync(from, "web/lib/" + to);
 console.log(outFile, Math.round(html.length / 1024), "KB");
